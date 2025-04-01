@@ -26,5 +26,17 @@ class LogikaHry:
         elif farba == LogikaHry.MODRA or farba == "modra":
             self.zoznam_policok[riadok][stlpec] = LogikaHry.MODRA
 
+
+    #Vráti aktuálny stav hodov
+    def ZoznamHodov(self):
+        return self.zoznam_policok
+
+    #Metóda na vymazanie hodu zo zoznamu
+    def VymazHod(self,riadok, stlpec):
+        self.zoznam_policok[riadok][stlpec] = LogikaHry.PRAZDNO
+
+
     
+
+
 
