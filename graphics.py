@@ -1,1 +1,2 @@
 print("printuje")
+print("ja")
