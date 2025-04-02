@@ -42,6 +42,12 @@ class LogikaHry:
     #Metóda na vymazanie hodu zo zoznamu
     def VymazHod(self,riadok, stlpec):
         self.zoznam_policok[riadok][stlpec] = LogikaHry.PRAZDNO
+    #Vráti aktuálny stav hodov cervené farby
+    def Get_Cervena(self):
+        return self.VYHRA_CERVENA
+    #Vráti aktuálny stav hodov modrej farby
+    def Get_Modra(self):
+        return self.VYHRA_MODRA
 
 
     def VyhodnotHru(self):
@@ -91,12 +97,6 @@ class LogikaHry:
                         self.VYHRA_CERVENA = 1
                     else:
                         self.VYHRA_MODRA = 1
-
-
-
-
-
-
 
 
 
