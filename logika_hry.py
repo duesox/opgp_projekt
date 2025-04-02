@@ -8,19 +8,29 @@ class LogikaHry:
     PRAZDNO=0
     VYHRA_CERVENA=0
     VYHRA_MODRA=0
+    POCET_RIADKOV=6
+    POCET_STLPCOV=7
 
     #Zoznam na ukladanie hodov
-    zoznam_policok=[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]
+
 
 
     def __init__(self):
-        pass
+        self.zoznam_policok=[]
+        for i in range(self.POCET_RIADKOV):
+            for j in range(self.POCET_STLPCOV):
+                self.zoznam_policok[i].append(self.PRAZDNO)
 
     #Metóda na vymazanie dát zo zoznamu
     def ObnovHru(self):
-        self.zoznam_policok=[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]
+        for i in range(self.POCET_RIADKOV):
+            for j in range(self.POCET_STLPCOV):
+                self.zoznam_policok[i].append(self.PRAZDNO)
+    #Metóda na vymazanie dát hry
     def RestartHru(self):
-        self.zoznam_policok=[[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]]
+        for i in range(self.POCET_RIADKOV):
+            for j in range(self.POCET_STLPCOV):
+                self.zoznam_policok[i].append(self.PRAZDNO)
         self.VYHRA_CERVENA = 0
         self.VYHRA_MODRA = 0
 
