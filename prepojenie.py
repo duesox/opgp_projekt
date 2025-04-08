@@ -29,7 +29,10 @@ class Networking:
         self._multicast.bind(('', MPORT))
         self._multicast.listen(1)
         while True:  # skor by som toto vymazal a spravil periodicke spustanie funkcie
-            self._client_sock, self._address = self._multicast.accept()
+            # alebo by sme spravili refresh button, aby sa nepreťažovala sieť/zariadenie pripojením
+            # by som spravil timeout na zoznam zariadeni, ktore su dostupne na pripojenie
+            self._client_sock = self._multicast.accept()[0]
+            self._address = self._client_sock.getpeername()[0]
             for zaznam in self._clients:
                 if zaznam[1] != self._address or len(self._clients) == 0:
                     self._clients.append([None, self._address])
