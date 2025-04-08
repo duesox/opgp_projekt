@@ -19,7 +19,8 @@ def ip2bytes(addr):
 class Networking:
     def __init__(self):
         self._game_sock = None
-        self._devices = None
+        self._devices = {}
+        self._devices_lock = threading.Lock()
         self._self_address = None
         self._discovering = False
 
@@ -27,13 +28,14 @@ class Networking:
 
         self._send_thread = None
         self._recv_thread = None
+        self._del_old_dev_thread = None
 
 
         if os.path.exists(UUID_FILE):
             with open(UUID_FILE, 'r') as f:
-                self._uuid = f.readline().strip()
+                self._uuid = str(f.readline().strip())
         else:
-            self._uuid = uuid.uuid4()
+            self._uuid = str(uuid.uuid4())
             with open(UUID_FILE, 'w') as f:
                 f.write(str(self._uuid))
 
@@ -79,30 +81,36 @@ class Networking:
                 message = json.loads(data.decode())
                 if message['type'] == 'discovery' and message['uuid'] != self._uuid:
                     ip = addr[0]
-                    self._devices[ip] = {
-                        'nick': message['nick'],
-                        'uuid': message['uuid'],
-                        'last_ping': time.time(),
-                    }
+                    with self._devices_lock:
+                        self._devices[ip] = {
+                            'nick': message['nick'],
+                            'uuid': message['uuid'],
+                            'last_ping': time.time(),
+                        }
                 # print(f"sprava prijata: {message}")
             except (socket.timeout, json.JSONDecodeError):
                 continue
 
-        # odstranenie starych ipciek zo zoznamu, ak zariadenie nedostalo ping za poslednych 15 sekund
-        def del_old_devices(self):
+    # odstranenie starych ipciek zo zoznamu, ak zariadenie nedostalo ping za poslednych 15 sekund
+    def del_old_devices(self):
+        while self._discovering:
             current_time = time.time()
-            old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
-            for ip in old_ips:
-                del self._devices[ip]
-                print(f'vymazana stara ip: {ip}')
+            with self._devices_lock:
+                old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
+                for ip in old_ips:
+                    del self._devices[ip]
+                    print(f'vymazana stara ip: {ip}')
+            time.sleep(5)
 
-    # zaciatok periodickeho vyhladavania a prijimania hracov na hru, s tym ze tieto procesy bezia samostatne na vlastnych vlaknach
+    # zaciatok periodickeho vyhladavania a prijimania hracov na hru, s tym ze tieto procesy bezia samostatne
     def start_discovery(self):
         self._discovering = True
         self._send_thread = threading.Thread(target=self.send_discovery_loop)
         self._recv_thread = threading.Thread(target=self.recv_discovery_loop)
+        self._del_old_dev_thread = threading.Thread(target=self.del_old_devices)
         self._send_thread.start()
         self._recv_thread.start()
+        self._del_old_dev_thread.start()
         # print('zacate vyhladavanie')
 
     def stop_discovery(self):
@@ -111,6 +119,8 @@ class Networking:
             self._send_thread.join()
         if self._recv_thread is not None:
             self._recv_thread.join()
+        if self._del_old_dev_thread is not None:
+            self._del_old_dev_thread.join()
         # print("ukoncene vyhladavanie")
 
 
