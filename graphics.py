@@ -92,3 +92,4 @@ class Graphics:
 if __name__ == "__main__":  # Ak sa súbor spustí priamo.
     game = Graphics(6, 7, 1)  # Vytvorí nový objekt triedy Graphics (6 riadkov, 7 stĺpcov, začína hráč 1).
     game.run()  # Spustí hru.
+
