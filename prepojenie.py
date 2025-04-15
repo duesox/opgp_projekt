@@ -16,6 +16,10 @@ def ip2bytes(addr):
     return socket.inet_aton(addr)
 
 
+def send_message(message, sock):
+    sock.send(json.dumps(message).encode())
+
+
 class Networking:
     def __init__(self):
         self._game_sock = None
@@ -64,6 +68,7 @@ class Networking:
                     "uuid": self._uuid,
                 }
             ).encode()
+            print('send -',sprava)
             sock.sendto(sprava, (MGROUP, MPORT))
             # print(f"sprava poslana: {sprava}")
             time.sleep(5)
@@ -80,6 +85,7 @@ class Networking:
                 data, addr = sock.recvfrom(1024)
                 message = json.loads(data.decode())
                 if message['type'] == 'discovery' and message['uuid'] != self._uuid:
+                    print(message)
                     ip = addr[0]
                     with self._devices_lock:
                         self._devices[ip] = {
@@ -95,9 +101,11 @@ class Networking:
     def del_old_devices(self):
         while self._discovering:
             current_time = time.time()
+            print("start del")
             with self._devices_lock:
                 old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
                 for ip in old_ips:
+                    print('del old - '+ip)
                     del self._devices[ip]
                     print(f'vymazana stara ip: {ip}')
             time.sleep(5)
@@ -129,6 +137,7 @@ class Networking:
         try:
             self._game_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._game_sock.connect((address, PORT))
+            self.game_accept(address, 1)
         except(socket.error, ConnectionRefusedError) as e:
             self._game_sock = None
             print(f"Nastala chyba pri pripajani: {e}")
@@ -153,13 +162,14 @@ class Networking:
             return {'type': 'accept', 'confirm': 'choose'} # bude treba, aby este pouzivatel potvrdil alebo odmietol pozvanku
         elif message['confirm'] == 'confirmed':
             self.connect_to_client(message['address'])
-            return {'type':'accept', 'confirm': 'confirmed'}
+            return {'type': 'accept', 'confirm': 'confirmed'}
         elif message['confirm'] == 'rejected':
-            return {'type':'accept', 'confirm': 'rejected'}
+            return {'type': 'accept', 'confirm': 'rejected'}
 
     def handle_disconnect(self):
-        self._game_sock.close()
-        self._game_sock = None
+        if self._game_sock is not None:
+            self._game_sock.close()
+            self._game_sock = None
         return {'type': 'disconnect'}
 
     def handle_move(self, message):
@@ -184,15 +194,15 @@ class Networking:
         else:
             confirm = 'rejected'
         message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
-        self.send_message(message, accept_sock)
+        send_message(message, accept_sock)
 
     def send_move(self, x):
         message = {'type': 'move', 'uuid': self._uuid, 'x': x}
-        self.send_message(message, self._game_sock)
+        send_message(message, self._game_sock)
 
-    def send_message(self, message, sock):
-        sock.send(json.dumps(message).encode())
 
 if __name__ == "__main__":
     net = Networking()
     net.get_uuid()
+    print(net.handle_message(b'{"type": "disconnect"}'))
+    net.start_discovery()
