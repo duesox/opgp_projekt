@@ -76,6 +76,7 @@ class Networking:
     def recv_discovery_loop(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, ip2bytes('0.0.0.0'))
         sock.bind(('', MPORT))
         mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
