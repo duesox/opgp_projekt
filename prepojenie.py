@@ -26,7 +26,7 @@ class Networking:
         self._game_sock = None
         self._devices = {}
         self._devices_lock = threading.Lock()
-        self._self_address = None
+        self._self_address = socket.gethostbyname(socket.gethostname())
         self._discovering = False
 
         self._nick = None
@@ -80,7 +80,7 @@ class Networking:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
         sock.bind(('', MPORT))
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, ip2bytes('0.0.0.0'))
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, ip2bytes(self._self_address))
 
         mreq = struct.pack('4sl', socket.inet_aton(MGROUP), socket.INADDR_ANY)
         # mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
