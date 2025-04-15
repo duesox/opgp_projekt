@@ -8,7 +8,7 @@ import time
 
 PORT = 40337
 MPORT = 40338 # multicast port
-MGROUP = '224.0.0.3'
+MGROUP = '224.1.1.3'
 UUID_FILE = 'uuid.txt'
 
 # ip add return as bits
@@ -85,6 +85,7 @@ class Networking:
             try:
                 data, addr = sock.recvfrom(1024)
                 message = json.loads(data.decode())
+                print(message['uuid'] == self._uuid)
                 if message['type'] == 'discovery' and message['uuid'] != self._uuid:
                     print(message)
                     ip = addr[0]
@@ -94,7 +95,7 @@ class Networking:
                             'uuid': message['uuid'],
                             'last_ping': time.time(),
                         }
-                # print(f"sprava prijata: {message}")
+                    print(f"sprava prijata: {message}")
             except (socket.timeout, json.JSONDecodeError):
                 continue
 
