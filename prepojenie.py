@@ -81,9 +81,7 @@ class Networking:
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
         sock.bind(('', MPORT))
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, ip2bytes(self._self_address))
-
-        mreq = struct.pack('4sl', socket.inet_aton(MGROUP), socket.INADDR_ANY)
-        # mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
+        mreq = ip2bytes(MGROUP) + ip2bytes(self._self_address)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         sock.settimeout(10)
         while self._discovering:
