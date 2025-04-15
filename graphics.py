@@ -26,7 +26,7 @@ class Graphics:
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]  # Inicializuje prázdnu dosku (všetky hodnoty 0).
         self.running = True  # Premenná, ktorá kontroluje, či hra stále beží.
 
-        self.WIDTH, self.HEIGHT = 800, 600
+        self.WIDTH, self.HEIGHT = 700, 700
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("Arial", 80, bold=True)
