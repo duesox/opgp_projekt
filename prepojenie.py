@@ -1,7 +1,6 @@
 import os
 import threading
 import uuid
-import struct
 
 import json
 import socket
@@ -35,6 +34,21 @@ class Networking:
         self._recv_thread = None
         self._del_old_dev_thread = None
 
+        self._game_started = False
+
+        self.on_move_recieved = None
+        self.on_settings_changed = lambda x_size, y_size, max_win: None
+
+        self.on_game_invite = None
+        self.on_game_invite_rejected = None
+
+        self.on_connect = None
+        self.on_disconnect = None
+        self.on_new_discovery = None
+
+        self._x_size = 7
+        self._y_size = 6
+        self._max_wins = 3
 
         if os.path.exists(UUID_FILE):
             with open(UUID_FILE, 'r') as f:
@@ -55,6 +69,11 @@ class Networking:
 
     def get_devices(self):
         return self._devices
+
+    def set_game_settings(self, x_size, y_size, max_wins):
+        self._x_size = x_size
+        self._y_size = y_size
+        self._max_wins = max_wins
 
     # odosielanie multicast sprav
     def send_discovery_loop(self):
@@ -100,6 +119,8 @@ class Networking:
                     print(f"sprava prijata: {message}")
             except (socket.timeout, json.JSONDecodeError):
                 continue
+            self.del_old_devices()
+
 
     # odstranenie starych ipciek zo zoznamu, ak zariadenie nedostalo ping za poslednych 15 sekund
     def del_old_devices(self):
@@ -112,6 +133,7 @@ class Networking:
                     del self._devices[ip]
                     print(f'vymazana stara ip: {ip}')
             print(self._devices)
+            self.on_new_discovery()
             time.sleep(5)
 
     # zaciatok periodickeho vyhladavania a prijimania hracov na hru, s tym ze tieto procesy bezia samostatne
@@ -135,13 +157,27 @@ class Networking:
             self._del_old_dev_thread.join()
         # print("ukoncene vyhladavanie")
 
+    def tcp_listener_loop(self):
+        while self._discovering:
+            if self._game_sock is None:
+                time.sleep(1)
+                continue
+            try:
+                data = self._game_sock.recv(1024)
+                if data:
+                    self.handle_message(data)
+            except (ConnectionResetError, socket.timeout):
+                self.handle_disconnect()
 
-
-    def connect_to_client(self, address):
+    def connect_to_client(self, address, alr):
         try:
             self._game_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._game_sock.connect((address, PORT))
-            self.game_accept(address, 1)
+            if alr == 0:
+                self.game_accept(address, 1)
+            self._game_started = True
+            threading.Thread(target=self.tcp_listener_loop).start()
+            self.on_connect()
         except(socket.error, ConnectionRefusedError) as e:
             self._game_sock = None
             print(f"Nastala chyba pri pripajani: {e}")
@@ -150,54 +186,61 @@ class Networking:
     def handle_message(self, recv):
         message = json.loads(recv.decode())
         action = message['type']
-        if action == 'accept':
-            return self.handle_accept(message)
+        if action == 'accept' and self._game_started == False:
+            self.handle_accept(message)
         elif action == 'disconnect':
-            return self.handle_disconnect()
+            self.handle_disconnect()
         elif action == 'move':
-            return self.handle_move(message)
+            self.handle_move(message)
         elif action == 'settings':
-            return self.handle_settings(message)
+            self.handle_settings(message)
         else:
             print("Invalid type")
 
     def handle_accept(self, message):
         if message['confirm'] == 'confirm':
-            return {'type': 'accept', 'confirm': 'choose'} # bude treba, aby este pouzivatel potvrdil alebo odmietol pozvanku
+            self.on_game_invite() # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
         elif message['confirm'] == 'confirmed':
-            self.connect_to_client(message['address'])
-            return {'type': 'accept', 'confirm': 'confirmed'}
+            self.connect_to_client(message['address'], 1)
         elif message['confirm'] == 'rejected':
-            return {'type': 'accept', 'confirm': 'rejected'}
+            self.on_game_invite_rejected()
 
     def handle_disconnect(self):
         if self._game_sock is not None:
             self._game_sock.close()
             self._game_sock = None
-        return {'type': 'disconnect'}
+            self._game_started = False
+            self.on_disconnect()
 
     def handle_move(self, message):
         x = message['x']
-        return {'type': 'move', 'x': x}
+        self.on_move_recieved(x)
 
     def handle_settings(self, message):
         x_size = message['x_size']
         y_size = message['y_size']
         max_wins = message['max_wins']
-
-        return {'type': 'settings', 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
+        self.on_settings_changed(x_size, y_size, max_wins)
 
     # Prijatie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 default prijat, 1 prijata pozvanka, 2 odmietnuta pozvanka
-    def game_accept(self, target_address, accept=0):
+    def game_accept(self, target_address, x_size=0, y_size=0, max_wins=0, accept=0):
         accept_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         accept_sock.connect((target_address, PORT))
         if accept == 0:
             confirm = 'confirm'
+            self._x_size = x_size
+            self._y_size = y_size
+            self._max_wins = max_wins
+            message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
         elif accept == 1:
             confirm = 'confirmed'
+            message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
         else:
             confirm = 'rejected'
-        message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
+            self._x_size = 7
+            self._y_size = 6
+            self._max_wins = 3
+            message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
         send_message(message, accept_sock)
 
     def send_move(self, x):
@@ -210,3 +253,4 @@ if __name__ == "__main__":
     net.get_uuid()
     print(net.handle_message(b'{"type": "disconnect"}'))
     net.start_discovery()
+    net.game_accept('192.168.0.126')
