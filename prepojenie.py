@@ -1,6 +1,7 @@
 import os
 import threading
 import uuid
+import struct
 
 import json
 import socket
@@ -74,18 +75,21 @@ class Networking:
             time.sleep(5)
 
     def recv_discovery_loop(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print('recv discovery')
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, ip2bytes('0.0.0.0'))
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
         sock.bind(('', MPORT))
-        mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, ip2bytes('0.0.0.0'))
+
+        mreq = struct.pack('4sl', socket.inet_aton(MGROUP), socket.INADDR_ANY)
+        # mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        sock.settimeout(2)
+        sock.settimeout(10)
         while self._discovering:
             try:
                 data, addr = sock.recvfrom(1024)
                 message = json.loads(data.decode())
-                print(message['uuid'] == self._uuid)
                 if message['type'] == 'discovery' and message['uuid'] != self._uuid:
                     print(message)
                     ip = addr[0]
@@ -103,13 +107,13 @@ class Networking:
     def del_old_devices(self):
         while self._discovering:
             current_time = time.time()
-            print("start del")
             with self._devices_lock:
                 old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
                 for ip in old_ips:
                     print('del old - '+ip)
                     del self._devices[ip]
                     print(f'vymazana stara ip: {ip}')
+            print(self._devices)
             time.sleep(5)
 
     # zaciatok periodickeho vyhladavania a prijimania hracov na hru, s tym ze tieto procesy bezia samostatne
