@@ -31,10 +31,13 @@ class Networking:
 
         self._nick = None
 
+        """
         self._send_thread = None
         self._recv_thread = None
         self._del_old_dev_thread = None
+        """
         self._tcp_recv_thread = None
+        self._disc_thread = None
 
         self._game_started = False
 
@@ -81,25 +84,10 @@ class Networking:
         self._y_size = y_size
         self._max_wins = max_wins
 
-    # odosielanie multicast sprav
-    def send_discovery_loop(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
-        while self._discovering:
-            sprava = json.dumps(
-                {
-                    'nick': self._nick,
-                    "type": "discovery",
-                    "timestamp": int(time.time()),
-                    "uuid": self._uuid,
-                }
-            ).encode()
-            print('send -', sprava)
-            sock.sendto(sprava, (MGROUP, MPORT))
-            # print(f"sprava poslana: {sprava}")
-            time.sleep(5)
-        sock.close()
+    def get_game_settings(self):
+        return self._x_size, self._y_size, self._max_wins
 
+<<<<<<< Updated upstream
     def recv_discovery_loop(self):
         print('recv discovery')
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -144,14 +132,22 @@ class Networking:
             time.sleep(5)
 
     # zaciatok periodickeho vyhladavania a prijimania hracov na hru, s tym ze tieto procesy bezia samostatne
+=======
+    # zaciatok periodickeho prijimania, posielania multicastu a vymazavania starych zariadeni
+    # s tym ze tento proces bezi samostatne
+>>>>>>> Stashed changes
     def start_discovery(self):
         self._discovering = True
+        self._disc_thread = threading.Thread(target=self.discovery_loop)
+        self._disc_thread.start()
+        """
         self._send_thread = threading.Thread(target=self.send_discovery_loop)
         self._recv_thread = threading.Thread(target=self.recv_discovery_loop)
         self._del_old_dev_thread = threading.Thread(target=self.del_old_devices)
         self._send_thread.start()
         self._recv_thread.start()
         self._del_old_dev_thread.start()
+        """
         # print('zacate vyhladavanie')
 
     # toto treba osetrit, aby pri vypnuti programu sa vykonalo spolocne so stop_tcp_listen
@@ -159,12 +155,16 @@ class Networking:
     #
     def stop_discovery(self):
         self._discovering = False
+        if self._disc_thread is not None:
+            self._disc_thread.join()
+        """
         if self._send_thread is not None:
             self._send_thread.join()
         if self._recv_thread is not None:
             self._recv_thread.join()
         if self._del_old_dev_thread is not None:
             self._del_old_dev_thread.join()
+        """
         # print("ukoncene vyhladavanie")
 
     def discovery_loop(self):
@@ -173,19 +173,17 @@ class Networking:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('', MPORT))
         mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        sock.settimeout(5)
         """
         while self._discovering:
             
             
             time.sleep(5)
         """
-
+        sock.settimeout(5)
         while self._discovering:
             current_time = time.time()
             if current_time - previous_send_recv > 5:
@@ -231,6 +229,7 @@ class Networking:
                         print(f'vymazana stara ip: {ip}')
                 print(self._devices)
                 self.on_new_discovery(self._devices)
+            time.sleep(5)
         sock.close()
 
     def tcp_listener_loop(self):
@@ -304,18 +303,14 @@ class Networking:
             accept_sock.connect((target_address, PORT))
             if accept == 0:
                 confirm = 'confirm'
-                self._x_size = x_size
-                self._y_size = y_size
-                self._max_wins = max_wins
+                self.set_game_settings(x_size, y_size, max_wins)
                 message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
             elif accept == 1:
                 confirm = 'confirmed'
                 message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
             else:
                 confirm = 'rejected'
-                self._x_size = 7
-                self._y_size = 6
-                self._max_wins = 3
+                self.set_game_settings(x_size, y_size, max_wins)
                 message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
             send_message(message, accept_sock)
 
@@ -329,3 +324,66 @@ if __name__ == "__main__":
     net.get_uuid()
     print(net.handle_message(b'{"type": "disconnect"}'))
     net.start_discovery()
+
+"""
+    def send_discovery_loop(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+        while self._discovering:
+            sprava = json.dumps(
+                {
+                    'nick': self._nick,
+                    "type": "discovery",
+                    "timestamp": int(time.time()),
+                    "uuid": self._uuid,
+                }
+            ).encode()
+            print('send -', sprava)
+            sock.sendto(sprava, (MGROUP, MPORT))
+            # print(f"sprava poslana: {sprava}")
+            time.sleep(5)
+        sock.close()
+
+    def recv_discovery_loop(self):
+        print('recv discovery')
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('', MPORT))
+        mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        sock.settimeout(5)
+        while self._discovering:
+            try:
+                data, addr = sock.recvfrom(1024)
+                message = json.loads(data.decode())
+                if message['type'] == 'discovery' and message['uuid'] != self._uuid:
+                    print(message)
+                    ip = addr[0]
+                    with self._devices_lock:
+                        if ip in self._devices:
+                            self._devices[ip]['last_ping'] = int(time.time())
+                        else:
+                            self._devices[ip] = {
+                                'nick': message['nick'],
+                                'uuid': message['uuid'],
+                                'last_ping': int(time.time()),
+                            }
+                    print(f"sprava prijata: {message}")
+            except (socket.timeout, json.JSONDecodeError):
+                continue
+        sock.close()
+
+    # odstranenie starych ipciek zo zoznamu, ak zariadenie nedostalo ping za poslednych 15 sekund
+    def del_old_devices(self):
+        while self._discovering:
+            current_time = int(time.time())
+            with self._devices_lock:
+                old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
+                for ip in old_ips:
+                    print('del old - '+ip)
+                    del self._devices[ip]
+                    print(f'vymazana stara ip: {ip}')
+            print(self._devices)
+            self.on_new_discovery(self._devices)
+            time.sleep(5)
+"""
