@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import uuid
 
@@ -107,7 +108,8 @@ class Networking:
     def stop_discovery(self):
         self._discovering = False
         if self._disc_thread is not None:
-            self._disc_thread.join()
+            while self._disc_thread.is_alive():
+                self._disc_thread.join(timeout=1)
         """
         if self._send_thread is not None:
             self._send_thread.join()
@@ -121,20 +123,21 @@ class Networking:
     def discovery_loop(self):
         previous_send_recv = 0
         previous_del = 0
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+        send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
 
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', MPORT))
+        recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        recv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv.bind(('', MPORT))
         mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        recv.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         """
         while self._discovering:
             
             
             time.sleep(5)
         """
-        sock.settimeout(5)
+        recv.settimeout(5)
         while self._discovering:
             current_time = time.time()
             if current_time - previous_send_recv > 5:
@@ -148,13 +151,13 @@ class Networking:
                     }
                 ).encode()
                 print('send -', sprava)
-                sock.sendto(sprava, (MGROUP, MPORT))
+                send.sendto(sprava, (MGROUP, MPORT))
                 # print(f"sprava poslana: {sprava}")
 
                 try:
-                    data, addr = sock.recvfrom(1024)
+                    data, addr = recv.recvfrom(1024)
                     message = json.loads(data.decode())
-                    if message['type'] == 'discovery' and message['uuid'] != self._uuid:
+                    if message["type"] == "discovery" and """message['uuid'] != self._uuid""":
                         print(message)
                         ip = addr[0]
                         with self._devices_lock:
@@ -181,7 +184,8 @@ class Networking:
                 print(self._devices)
                 self.on_new_discovery(self._devices)
             time.sleep(5)
-        sock.close()
+        send.close()
+        recv.close()
 
     def tcp_listener_loop(self):
         while self._tcp_recieving:
@@ -272,9 +276,16 @@ class Networking:
 
 if __name__ == "__main__":
     net = Networking()
-    net.get_uuid()
-    print(net.handle_message(b'{"type": "disconnect"}'))
-    net.start_discovery()
+    try:
+        net.get_uuid()
+        print(net.handle_message(b'{"type": "disconnect"}'))
+        net.start_discovery()
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        net.stop_discovery()
+        net.stop_tcp_listen()
+        sys.exit(0)
 
 """
     def send_discovery_loop(self):
