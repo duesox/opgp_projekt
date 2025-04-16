@@ -39,6 +39,7 @@ class Networking:
         """
         self._tcp_recv_thread = None
         self._disc_thread = None
+        self._stop_event = threading.Event()
 
         self._game_started = False
 
@@ -57,7 +58,7 @@ class Networking:
         self._max_wins = 3
 
         # toto potom treba zmenit na False; v realnom programe ked sa zapina discovery okno sa to nastavi na True a potom, ak sa z neho alebo z hry odide, tak sa nastavi na false
-        self._tcp_recieving = True
+        self._tcp_recieving = False
 
         if os.path.exists(UUID_FILE):
             with open(UUID_FILE, 'r') as f:
@@ -107,6 +108,7 @@ class Networking:
     #
     def stop_discovery(self):
         self._discovering = False
+        self._stop_event.set()
         if self._disc_thread is not None:
             while self._disc_thread.is_alive():
                 self._disc_thread.join(timeout=1)
@@ -121,71 +123,72 @@ class Networking:
         # print("ukoncene vyhladavanie")
 
     def discovery_loop(self):
-        previous_send_recv = 0
-        previous_del = 0
-        send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+        while not self._stop_event.is_set():
+            previous_send_recv = 0
+            previous_del = 0
+            send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
 
-        recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        recv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        recv.bind(('', MPORT))
-        mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
-        recv.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        """
-        while self._discovering:
-            
-            
-            time.sleep(5)
-        """
-        recv.settimeout(5)
-        while self._discovering:
-            current_time = time.time()
-            if current_time - previous_send_recv > 5:
-                previous_send_recv = current_time
-                sprava = json.dumps(
-                    {
-                        'nick': self._nick,
-                        "type": "discovery",
-                        "timestamp": int(time.time()),
-                        "uuid": self._uuid,
-                    }
-                ).encode()
-                print('send -', sprava)
-                send.sendto(sprava, (MGROUP, MPORT))
-                # print(f"sprava poslana: {sprava}")
+            recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            recv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            recv.bind(('', MPORT))
+            mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
+            recv.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            """
+            while self._discovering:
+                
+                
+                time.sleep(5)
+            """
+            recv.settimeout(5)
+            while self._discovering:
+                current_time = time.time()
+                if current_time - previous_send_recv > 5:
+                    previous_send_recv = current_time
+                    sprava = json.dumps(
+                        {
+                            'nick': self._nick,
+                            "type": "discovery",
+                            "timestamp": int(time.time()),
+                            "uuid": self._uuid,
+                        }
+                    ).encode()
+                    print('send -', sprava)
+                    send.sendto(sprava, (MGROUP, MPORT))
+                    # print(f"sprava poslana: {sprava}")
 
-                try:
-                    data, addr = recv.recvfrom(1024)
-                    message = json.loads(data.decode())
-                    if message["type"] == "discovery" and """message['uuid'] != self._uuid""":
-                        print(message)
-                        ip = addr[0]
-                        with self._devices_lock:
-                            if ip in self._devices:
-                                self._devices[ip]['last_ping'] = int(time.time())
-                            else:
-                                self._devices[ip] = {
-                                    'nick': message['nick'],
-                                    'uuid': message['uuid'],
-                                    'last_ping': int(time.time()),
-                                }
-                        print(f"sprava prijata: {message}")
-                except (socket.timeout, json.JSONDecodeError):
-                    continue
+                    try:
+                        data, addr = recv.recvfrom(1024)
+                        message = json.loads(data.decode())
+                        if message["type"] == "discovery" and """message['uuid'] != self._uuid""":
+                            print(message)
+                            ip = addr[0]
+                            with self._devices_lock:
+                                if ip in self._devices:
+                                    self._devices[ip]['last_ping'] = int(time.time())
+                                else:
+                                    self._devices[ip] = {
+                                        'nick': message['nick'],
+                                        'uuid': message['uuid'],
+                                        'last_ping': int(time.time()),
+                                    }
+                            print(f"sprava prijata: {message}")
+                    except (socket.timeout, json.JSONDecodeError):
+                        continue
 
-            if current_time - previous_del > 15:
-                previous_del = current_time
-                with self._devices_lock:
-                    old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
-                    for ip in old_ips:
-                        print('del old - '+ip)
-                        del self._devices[ip]
-                        print(f'vymazana stara ip: {ip}')
-                print(self._devices)
-                self.on_new_discovery(self._devices)
-            time.sleep(5)
-        send.close()
-        recv.close()
+                if current_time - previous_del > 15:
+                    previous_del = current_time
+                    with self._devices_lock:
+                        old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
+                        for ip in old_ips:
+                            print('del old - '+ip)
+                            del self._devices[ip]
+                            print(f'vymazana stara ip: {ip}')
+                    print(self._devices)
+                    self.on_new_discovery(self._devices)
+                time.sleep(5)
+            send.close()
+            recv.close()
 
     def tcp_listener_loop(self):
         while self._tcp_recieving:
@@ -195,9 +198,11 @@ class Networking:
 
     # zapne sa pri prichode a vypne sa pri odchode z discovery/hry
     def start_tcp_listen(self):
+        self._tcp_recieving = True
         self._tcp_recv_thread = threading.Thread(target=self.tcp_listener_loop).start()
 
     def stop_tcp_listen(self):
+        self._tcp_recieving = False
         if self._tcp_recv_thread is not None:
             self._tcp_recv_thread.join()
 
@@ -283,9 +288,14 @@ if __name__ == "__main__":
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        print("KeyboardInterrupt")
         net.stop_discovery()
         net.stop_tcp_listen()
-        sys.exit(0)
+        try:
+            sys.exit(130)
+        except SystemExit:
+            os._exit(130)
+        sys.exit(1)
 
 """
     def send_discovery_loop(self):
