@@ -8,7 +8,7 @@ import time
 
 PORT = 40337
 MPORT = 40338 # multicast port
-MGROUP = '224.1.1.3'
+MGROUP = '224.0.0.123'
 UUID_FILE = 'uuid.txt'
 
 # ip add return as bits
