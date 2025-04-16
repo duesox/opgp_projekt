@@ -167,6 +167,59 @@ class Networking:
             self._del_old_dev_thread.join()
         # print("ukoncene vyhladavanie")
 
+    def discovery_loop(self):
+        send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+        recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        recv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv.bind(('', MPORT))
+        mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
+        recv.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        recv.settimeout(5)
+        """
+        while self._discovering:
+            
+            
+            time.sleep(5)
+        """
+
+        while self._discovering:
+            sprava = json.dumps(
+                {
+                    'nick': self._nick,
+                    "type": "discovery",
+                    "timestamp": int(time.time()),
+                    "uuid": self._uuid,
+                }
+            ).encode()
+            print('send -', sprava)
+            send.sendto(sprava, (MGROUP, MPORT))
+            # print(f"sprava poslana: {sprava}")
+            try:
+                data, addr = recv.recvfrom(1024)
+                message = json.loads(data.decode())
+                if message['type'] == 'discovery' and message['uuid'] != self._uuid:
+                    print(message)
+                    ip = addr[0]
+                    with self._devices_lock:
+                        if ip in self._devices:
+                            self._devices[ip]['last_ping'] = int(time.time())
+                        else:
+                            self._devices[ip] = {
+                                'nick': message['nick'],
+                                'uuid': message['uuid'],
+                                'last_ping': int(time.time()),
+                            }
+                    print(f"sprava prijata: {message}")
+            except (socket.timeout, json.JSONDecodeError):
+                continue
+        send.close()
+        recv.close()
+
+        while self._discovering:
+
+        sock.close()
+
     def tcp_listener_loop(self):
         while self._tcp_recieving:
             data = self._game_sock.recv(1024)
