@@ -206,7 +206,7 @@ class Networking:
         elif action == 'settings':
             self.handle_settings(message)
         else:
-            print("Invalid type")
+            print("Invalid message type")
 
     def handle_accept(self, message):
         if message['confirm'] == 'confirm':
@@ -233,7 +233,7 @@ class Networking:
         max_wins = message['max_wins']
         self.on_settings_changed(x_size, y_size, max_wins)
 
-    # Prijatie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 poslat pozvanku, 1 potvrdzujem poznamku, 2 odmietnuta pozvanka
+    # Poslanie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 poslat pozvanku, 1 potvrdzujem poznamku, 2 odmietnuta pozvanka
     def game_accept(self, target_address, x_size=7, y_size=6, max_wins=3, accept=0):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as accept_sock:
             accept_sock.connect((target_address, PORT))
