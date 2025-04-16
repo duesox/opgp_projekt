@@ -87,55 +87,6 @@ class Networking:
     def get_game_settings(self):
         return self._x_size, self._y_size, self._max_wins
 
-<<<<<<< Updated upstream
-    def recv_discovery_loop(self):
-        print('recv discovery')
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind((MGROUP, MPORT))
-        mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        sock.settimeout(5)
-        while self._discovering:
-            try:
-                data, addr = sock.recvfrom(1024)
-                message = json.loads(data.decode())
-                if message['type'] == 'discovery' and message['uuid'] != self._uuid:
-                    print(message)
-                    ip = addr[0]
-                    with self._devices_lock:
-                        if ip in self._devices:
-                            self._devices[ip]['last_ping'] = int(time.time())
-                        else:
-                            self._devices[ip] = {
-                                'nick': message['nick'],
-                                'uuid': message['uuid'],
-                                'last_ping': int(time.time()),
-                            }
-                    print(f"sprava prijata: {message}")
-            except (socket.timeout, json.JSONDecodeError):
-                continue
-        sock.close()
-
-    # odstranenie starych ipciek zo zoznamu, ak zariadenie nedostalo ping za poslednych 15 sekund
-    def del_old_devices(self):
-        while self._discovering:
-            current_time = int(time.time())
-            with self._devices_lock:
-                old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
-                for ip in old_ips:
-                    print('del old - '+ip)
-                    del self._devices[ip]
-                    print(f'vymazana stara ip: {ip}')
-            print(self._devices)
-            self.on_new_discovery(self._devices)
-            time.sleep(5)
-
-    # zaciatok periodickeho vyhladavania a prijimania hracov na hru, s tym ze tieto procesy bezia samostatne
-=======
-    # zaciatok periodickeho prijimania, posielania multicastu a vymazavania starych zariadeni
-    # s tym ze tento proces bezi samostatne
->>>>>>> Stashed changes
     def start_discovery(self):
         self._discovering = True
         self._disc_thread = threading.Thread(target=self.discovery_loop)
