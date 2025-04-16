@@ -7,9 +7,10 @@ import socket
 import time
 
 PORT = 40337
-MPORT = 40338 # multicast port
+MPORT = 40338  # multicast port
 MGROUP = '224.0.0.123'
 UUID_FILE = 'uuid.txt'
+
 
 # ip add return as bits
 def ip2bytes(addr):
@@ -93,7 +94,7 @@ class Networking:
                     "uuid": self._uuid,
                 }
             ).encode()
-            print('send -',sprava)
+            print('send -', sprava)
             sock.sendto(sprava, (MGROUP, MPORT))
             # print(f"sprava poslana: {sprava}")
             time.sleep(5)
@@ -127,7 +128,6 @@ class Networking:
             except (socket.timeout, json.JSONDecodeError):
                 continue
         sock.close()
-
 
     # odstranenie starych ipciek zo zoznamu, ak zariadenie nedostalo ping za poslednych 15 sekund
     def del_old_devices(self):
@@ -168,14 +168,17 @@ class Networking:
         # print("ukoncene vyhladavanie")
 
     def discovery_loop(self):
-        send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
-        recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        recv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        recv.bind(('', MPORT))
+        previous_send_recv = 0
+        previous_del = 0
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('', MPORT))
         mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
-        recv.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        recv.settimeout(5)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        sock.settimeout(5)
         """
         while self._discovering:
             
@@ -184,40 +187,50 @@ class Networking:
         """
 
         while self._discovering:
-            sprava = json.dumps(
-                {
-                    'nick': self._nick,
-                    "type": "discovery",
-                    "timestamp": int(time.time()),
-                    "uuid": self._uuid,
-                }
-            ).encode()
-            print('send -', sprava)
-            send.sendto(sprava, (MGROUP, MPORT))
-            # print(f"sprava poslana: {sprava}")
-            try:
-                data, addr = recv.recvfrom(1024)
-                message = json.loads(data.decode())
-                if message['type'] == 'discovery' and message['uuid'] != self._uuid:
-                    print(message)
-                    ip = addr[0]
-                    with self._devices_lock:
-                        if ip in self._devices:
-                            self._devices[ip]['last_ping'] = int(time.time())
-                        else:
-                            self._devices[ip] = {
-                                'nick': message['nick'],
-                                'uuid': message['uuid'],
-                                'last_ping': int(time.time()),
-                            }
-                    print(f"sprava prijata: {message}")
-            except (socket.timeout, json.JSONDecodeError):
-                continue
-        send.close()
-        recv.close()
+            current_time = time.time()
+            if current_time - previous_send_recv > 5:
+                previous_send_recv = current_time
+                sprava = json.dumps(
+                    {
+                        'nick': self._nick,
+                        "type": "discovery",
+                        "timestamp": int(time.time()),
+                        "uuid": self._uuid,
+                    }
+                ).encode()
+                print('send -', sprava)
+                sock.sendto(sprava, (MGROUP, MPORT))
+                # print(f"sprava poslana: {sprava}")
 
-        while self._discovering:
+                try:
+                    data, addr = sock.recvfrom(1024)
+                    message = json.loads(data.decode())
+                    if message['type'] == 'discovery' and message['uuid'] != self._uuid:
+                        print(message)
+                        ip = addr[0]
+                        with self._devices_lock:
+                            if ip in self._devices:
+                                self._devices[ip]['last_ping'] = int(time.time())
+                            else:
+                                self._devices[ip] = {
+                                    'nick': message['nick'],
+                                    'uuid': message['uuid'],
+                                    'last_ping': int(time.time()),
+                                }
+                        print(f"sprava prijata: {message}")
+                except (socket.timeout, json.JSONDecodeError):
+                    continue
 
+            if current_time - previous_del > 15:
+                previous_del = current_time
+                with self._devices_lock:
+                    old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
+                    for ip in old_ips:
+                        print('del old - '+ip)
+                        del self._devices[ip]
+                        print(f'vymazana stara ip: {ip}')
+                print(self._devices)
+                self.on_new_discovery(self._devices)
         sock.close()
 
     def tcp_listener_loop(self):
@@ -242,15 +255,14 @@ class Networking:
                 self.game_accept(address, 1)
             self._game_started = True
             self.on_connect()
-        except(socket.error, ConnectionRefusedError) as e:
+        except (socket.error, ConnectionRefusedError) as e:
             self._game_sock = None
             print(f"Nastala chyba pri pripajani: {e}")
-
 
     def handle_message(self, recv):
         message = json.loads(recv.decode())
         action = message['type']
-        if action == 'accept' and self._game_started == False:
+        if action == 'accept' and self._game_started is False:
             self.handle_accept(message)
         elif action == 'disconnect':
             self.handle_disconnect()
@@ -263,7 +275,7 @@ class Networking:
 
     def handle_accept(self, message):
         if message['confirm'] == 'confirm':
-            self.on_game_invite(message['nick'], message['x_size'], message['y_size'], message['max_wins']) # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
+            self.on_game_invite(message['nick'], message['x_size'], message['y_size'], message['max_wins'])  # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
         elif message['confirm'] == 'confirmed':
             self.connect_to_client(message['address'], 1)
         elif message['confirm'] == 'rejected':
