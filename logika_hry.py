@@ -4,6 +4,9 @@ import graphics as gr
 import pygame
 import sys
 
+from opgp_projekt.skore import Score
+
+
 class LogikaHry :
     #Konštanty
     CERVENA=2
@@ -22,6 +25,9 @@ class LogikaHry :
         self.hrac=hrac
         self.gra=gr.Graphics(self.POCET_RIADKOV, self.POCET_STLPCOV )
         self.zoznam_policok=[]
+        self.pocet_kol=0
+        self.skore_modry=Score()
+        self.skore_cerveny=Score()
         for i in range(self.POCET_RIADKOV):
             self.zoznam_policok.append([])
             for j in range(self.POCET_STLPCOV):
@@ -31,6 +37,7 @@ class LogikaHry :
 
     #Metóda na vymazanie dát zo zoznamu
     def obnovHru(self):
+        self.pocet_kol=0
         for i in range(self.POCET_RIADKOV):
             self.zoznam_policok[i] = []
             for j in range(self.POCET_STLPCOV):
@@ -39,6 +46,7 @@ class LogikaHry :
 
     #Metóda na vymazanie dát hry
     def restartHru(self):
+        self.pocet_kol=0
         for i in range(self.POCET_RIADKOV):
             self.zoznam_policok.append([])
             for j in range(self.POCET_STLPCOV):
@@ -48,6 +56,7 @@ class LogikaHry :
 
     #Nastavenie hodu na správne miesto a priradenie správnej farby
     def nastavHod(self,riadok, stlpec, farba):
+        self.pocet_kol +=1
         if farba == LogikaHry.CERVENA :
             self.zoznam_policok[riadok][stlpec] = LogikaHry.CERVENA
         elif farba == LogikaHry.MODRA :
@@ -118,6 +127,7 @@ class LogikaHry :
                     #Vyhodnotenie vodorovne
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
+                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
                         self.gra.winAnimation()
                         self.obnovHru()
                         self.gra.draw_board()
@@ -136,12 +146,14 @@ class LogikaHry :
                     # Vyhodnotenie vertikálne
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
+                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
                         self.gra.winAnimation()
                         self.obnovHru()
                         self.gra.draw_board()
                     else:
                         self.VYHRA_MODRA += 1
                         self.gra.winAnimation()
+                        self.skore_modry.set_celkove_skore(self.pocet_kol)
                         self.obnovHru()
                         self.gra.draw_board()
 
@@ -155,12 +167,14 @@ class LogikaHry :
 
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
+                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
                         self.gra.winAnimation()
                         self.obnovHru()
                         self.gra.draw_board()
                     else:
                         self.VYHRA_MODRA += 1
                         self.gra.winAnimation()
+                        self.skore_modry.set_celkove_skore(self.pocet_kol)
                         self.obnovHru()
                         self.gra.draw_board()
 
@@ -170,12 +184,14 @@ class LogikaHry :
                     # Vyhodnotenie krížom
                     if self.zoznam_policok[i][j+3] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
+                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
                         self.gra.winAnimation()
                         self.obnovHru()
                         self.gra.draw_board()
                     else:
                         self.VYHRA_MODRA += 1
                         self.gra.winAnimation()
+                        self.skore_modry.set_celkove_skore(self.pocet_kol)
                         self.obnovHru()
                         self.gra.draw_board()
 
