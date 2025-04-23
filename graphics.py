@@ -32,10 +32,9 @@ class Graphics:
         self.font = pygame.font.SysFont("Arial", 80, bold=True)
 
     def draw_board(self):
-        """Vykreslí hraciu plochu."""
-        self.screen.fill(self.BG_COLOR)  # Vyplní obrazovku tmavo modrou farbou (pozadie).
-        for row in range(self.rows):  # Pre každý riadok na doske.
-            for col in range(self.cols):  # Pre každý stĺpec na doske.
+        self.screen.fill(self.BG_COLOR)
+        for row in range(self.rows):
+            for col in range(self.cols):
                 # Ak je pole prázdne (0), použije sa farba EMPTY_COLOR, inak sa použije farba hráča.
                 color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
                 # Vykreslí žetón (kruh) na danú pozíciu (row, col) s vybranou farbou.
@@ -43,10 +42,13 @@ class Graphics:
                     col * self.CELL_SIZE + self.CELL_SIZE // 2,  # X pozícia (stĺpec * veľkosť bunky + polovičná veľkosť).
                     (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),  # Y pozícia (riadok * veľkosť bunky + polovičná veľkosť).
                     self.RADIUS)  # Polomer pre vykreslenie žetónu.
-        pygame.display.update()  # Aktualizuje obrazovku, aby sa vykreslili všetky zmeny.
+        pygame.display.update()
+
+    def clear_board(self):
+        self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+        self.draw_board()
 
     def animate_fall(self, col, row, current_player):
-        """Animuje pád žetónu do daného stĺpca a riadku."""
         # X pozícia, kde bude žetón spadávať (stĺpec * veľkosť bunky + polovičná veľkosť).
         x = col * self.CELL_SIZE + self.CELL_SIZE // 2
         # Počiatočná Y pozícia (na začiatku nad doskou).
@@ -65,8 +67,7 @@ class Graphics:
         self.board[row][col] = current_player
         self.draw_board()  # Vykreslí dosku po páde žetónu.
 
-    def winAnimation(self):
-        # Create confetti particles as dictionaries
+    def winAnimation(self, vyherca):
         confetti_list = []
         for _ in range(100):
             confetti = {
@@ -93,19 +94,13 @@ class Graphics:
                 if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     running = False
 
-            # Update & draw each confetti particle
             for c in confetti_list:
                 c["y"] += c["speed"]
                 c["x"] += c["angle"]
                 pygame.draw.rect(self.screen, c["color"], (c["x"], c["y"], c["size"], c["size"]))
 
-            # Draw "You Won" text
-            text = self.font.render("You Won!", True, (255, 255, 255))
+            text = self.font.render(vyherca + " Vyhral!", True, (255, 255, 255))
             text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
             self.screen.blit(text, text_rect)
 
             pygame.display.flip()
-
-if __name__ == "__main__":  # Ak sa súbor spustí priamo.
-    game = Graphics(6, 7)  # Vytvorí nový objekt triedy Graphics (6 riadkov, 7 stĺpcov, začína hráč 1).
-    game.winAnimation()
