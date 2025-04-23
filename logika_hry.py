@@ -4,7 +4,7 @@ import graphics as gr
 import pygame
 import sys
 
-from opgp_projekt.skore import Score
+from skore import Score
 
 
 class LogikaHry :
@@ -128,14 +128,14 @@ class LogikaHry :
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
                         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Cerveny")
                         self.obnovHru()
-                        self.gra.draw_board()
+                        self.gra.clear_board()
                     else:
                         self.VYHRA_MODRA += 1
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Modry")
                         self.obnovHru()
-                        self.gra.draw_board()
+                        self.gra.clear_board()
 
         #Kontrola Vertikálne
         for i in range(3):
@@ -147,15 +147,17 @@ class LogikaHry :
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
                         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Cervena")
                         self.obnovHru()
                         self.gra.draw_board()
+                        self.gra.clear_board()
                     else:
                         self.VYHRA_MODRA += 1
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Modra")
                         self.skore_modry.set_celkove_skore(self.pocet_kol)
                         self.obnovHru()
                         self.gra.draw_board()
+                        self.gra.clear_board()
 
         #Kontrola Krížom
         for i in range(3):
@@ -168,15 +170,17 @@ class LogikaHry :
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
                         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Cervena")
                         self.obnovHru()
                         self.gra.draw_board()
+                        self.gra.clear_board()
                     else:
                         self.VYHRA_MODRA += 1
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Modra")
                         self.skore_modry.set_celkove_skore(self.pocet_kol)
                         self.obnovHru()
                         self.gra.draw_board()
+                        self.gra.clear_board()
 
                 if (self.zoznam_policok[i][j+3]==self.zoznam_policok[i+1][j+2]==self.zoznam_policok[i+2][j+1]==
                         self.zoznam_policok[i+3][j]!=LogikaHry.PRAZDNO):
@@ -185,15 +189,17 @@ class LogikaHry :
                     if self.zoznam_policok[i][j+3] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
                         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Cervena")
                         self.obnovHru()
                         self.gra.draw_board()
+                        self.gra.clear_board()
                     else:
                         self.VYHRA_MODRA += 1
-                        self.gra.winAnimation()
+                        self.gra.winAnimation("Modra")
                         self.skore_modry.set_celkove_skore(self.pocet_kol)
                         self.obnovHru()
                         self.gra.draw_board()
+                        self.gra.clear_board()
 
 
 if __name__ == "__main__":
