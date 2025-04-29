@@ -63,19 +63,22 @@ class LogikaHry :
             self.zoznam_policok[riadok][stlpec] = LogikaHry.MODRA
         self.vyhodnotHru()
 
-
     def kliknutie(self, x_pozicia):
         """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
-        stlpec = x_pozicia // self.gra.CELL_SIZE  # Určí stĺpec, na ktorý bolo kliknuté (podľa X pozície kliknutia).
-        volny_riadok = self.prazdnyRiadok(stlpec)  # Získa prvý voľný riadok v tomto stĺpci.
-        if volny_riadok is not None:  # Ak je voľný riadok.
-            self.gra.animate_fall(stlpec, volny_riadok, self.hrac)  # Spustí animáciu pádu žetónu.
-            self.nastavHod(volny_riadok, stlpec, self.hrac)
-            if self.hrac==1:
-                self.hrac = 2
-            else:
-                self.hrac=1
 
+        # Určí šírku hracej plochy
+        sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+        offset = 250  # Posun hracej plochy doprava o 250 px
+
+        # Skontroluje, či kliknutie je v rámci hracej plochy
+        if offset <= x_pozicia <= offset + sirka_hracej_plochy:
+            stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+            volny_riadok = self.prazdnyRiadok(stlpec)
+
+            if volny_riadok is not None:
+                self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.VYHRA_MODRA, self.VYHRA_CERVENA)
+                self.nastavHod(volny_riadok, stlpec, self.hrac)
+                self.hrac = 2 if self.hrac == 1 else 1
     def prazdnyRiadok(self, stlpec):
         """Vráti prvý voľný riadok v danom stĺpci, alebo None ak je plný."""
         # Prechádza všetky riadky v danom stĺpci (odspodu).
@@ -128,12 +131,13 @@ class LogikaHry :
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.VYHRA_CERVENA += 1
                         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("Cerveny")
+                        self.gra.winAnimation("cerveny")
                         self.obnovHru()
                         self.gra.clear_board()
+
                     else:
                         self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("Modry")
+                        self.gra.winAnimation("modry")
                         self.obnovHru()
                         self.gra.clear_board()
 
@@ -200,6 +204,7 @@ class LogikaHry :
                         self.obnovHru()
                         self.gra.draw_board()
                         self.gra.clear_board()
+        self.gra.zobraz_skore(self.VYHRA_MODRA, self.VYHRA_CERVENA)
 
 
 if __name__ == "__main__":
