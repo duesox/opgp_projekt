@@ -1,8 +1,7 @@
 class Score:
-    POCET_RIADKOV = 6
-    POCET_STLPCOV = 7
-    def __init__(self):
-        self.skore=self.POCET_RIADKOV*self.POCET_STLPCOV*50
+
+    def __init__(self,Pocet_riadkov,Pocet_stlpcov):
+        self.skore=Pocet_riadkov*Pocet_stlpcov*50
         self.celkove_skore=self.skore
 
     def get_skore(self,pocet_kol):
