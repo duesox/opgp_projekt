@@ -2,13 +2,15 @@ import os
 import sys
 import threading
 import uuid
+import netifaces
+import select
 
 import json
 import socket
 import time
 
-PORT = 40337
-MPORT = 40338  # multicast port
+PORT = 4037
+MPORT = 4038  # multicast port
 MGROUP = '224.0.0.123'
 UUID_FILE = 'uuid.txt'
 
@@ -124,29 +126,32 @@ class Networking:
 
     def discovery_loop(self):
         while not self._stop_event.is_set():
+            filtered = False
             previous_send_recv = 0
             previous_del = 0
-            send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
+            recvs = {}
+            send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+            for i in netifaces.interfaces():
+                if "Virtual" in i or "virtual" in i or "loop" in i or "Loop" in i or 2 not in netifaces.ifaddresses(i).keys():
+                    continue
+                print(i)
+                j = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                j.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                j.bind(('', MPORT))
+                print(netifaces.ifaddresses(i)[2][0]['addr'])
+                mreq = ip2bytes(MGROUP) + ip2bytes(netifaces.ifaddresses(i)[2][0]['addr'])  # tu musi byt presne zadana ipcka interfacu s inteom - bud ethernet alebo skor wifi
+                j.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+                j.settimeout(1)
+                recvs[j] = netifaces.ifaddresses(i)[2][0]['addr']
 
-            recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            recv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            recv.bind(('', MPORT))
-            mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
-            recv.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-            """
-            while self._discovering:
-                
-                
-                time.sleep(5)
-            """
-            recv.settimeout(5)
             while self._discovering:
                 current_time = time.time()
                 if current_time - previous_send_recv > 5:
                     previous_send_recv = current_time
                     sprava = json.dumps(
                         {
+                            'app': 'connect43sa',
                             'nick': self._nick,
                             "type": "discovery",
                             "timestamp": int(time.time()),
@@ -156,25 +161,41 @@ class Networking:
                     print('send -', sprava)
                     send.sendto(sprava, (MGROUP, MPORT))
                     # print(f"sprava poslana: {sprava}")
-
-                    try:
-                        data, addr = recv.recvfrom(1024)
-                        message = json.loads(data.decode())
-                        if message["type"] == "discovery" and """message['uuid'] != self._uuid""":
-                            print(message)
-                            ip = addr[0]
-                            with self._devices_lock:
-                                if ip in self._devices:
-                                    self._devices[ip]['last_ping'] = int(time.time())
-                                else:
-                                    self._devices[ip] = {
-                                        'nick': message['nick'],
-                                        'uuid': message['uuid'],
-                                        'last_ping': int(time.time()),
-                                    }
-                            print(f"sprava prijata: {message}")
-                    except (socket.timeout, json.JSONDecodeError):
-                        continue
+                    # tu
+                    # si
+                    # naposledy
+                    # skoncil
+                    ready_socks = select.select(list(recvs.keys()), [], [], 2)[0]
+                    if not ready_socks:
+                        pass
+                    else:
+                        try:
+                            for recv in ready_socks:
+                                print(recv)
+                                data, addr = recv.recvfrom(1024)
+                                message = json.loads(data.decode())
+                                if message["app"] == "connect43sa" and message["type"] == "discovery" """and message['uuid'] != self._uuid""":
+                                    for r in list(recvs.keys()):
+                                        if r != recv:
+                                            print('DEL', recvs[r])
+                                            del recvs[r]
+                                    filtered = True
+                                    print(message)
+                                    print(filtered)
+                                    ip = addr[0]
+                                    with self._devices_lock:
+                                        if ip in self._devices:
+                                            self._devices[ip]['last_ping'] = int(time.time())
+                                        else:
+                                            self._devices[ip] = {
+                                                'nick': message['nick'],
+                                                'uuid': message['uuid'],
+                                                'last_ping': int(time.time()),
+                                            }
+                                    print(f"sprava prijata: {message}")
+                        except (socket.timeout, json.JSONDecodeError):
+                            print('com')
+                            continue
 
                 if current_time - previous_del > 15:
                     previous_del = current_time
@@ -188,7 +209,6 @@ class Networking:
                     self.on_new_discovery(self._devices)
                 time.sleep(5)
             send.close()
-            recv.close()
 
     def tcp_listener_loop(self):
         while self._tcp_recieving:
@@ -264,18 +284,18 @@ class Networking:
             if accept == 0:
                 confirm = 'confirm'
                 self.set_game_settings(x_size, y_size, max_wins)
-                message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
+                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
             elif accept == 1:
                 confirm = 'confirmed'
-                message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
+                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
             else:
                 confirm = 'rejected'
                 self.set_game_settings(x_size, y_size, max_wins)
-                message = {'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
+                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
             send_message(message, accept_sock)
 
     def send_move(self, x):
-        message = {'type': 'move', 'uuid': self._uuid, 'x': x}
+        message = {'app': 'connect43sa', 'type': 'move', 'uuid': self._uuid, 'x': x}
         send_message(message, self._game_sock)
 
 
@@ -295,7 +315,6 @@ if __name__ == "__main__":
             sys.exit(130)
         except SystemExit:
             os._exit(130)
-        sys.exit(1)
 
 """
     def send_discovery_loop(self):
