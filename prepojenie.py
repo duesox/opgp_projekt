@@ -171,17 +171,14 @@ class Networking:
                     else:
                         try:
                             for recv in ready_socks:
-                                print(recv)
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
-                                if message["app"] == "connect43sa" and message["type"] == "discovery" """and message['uuid'] != self._uuid""":
+                                if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
                                     for r in list(recvs.keys()):
                                         if r != recv:
                                             print('DEL', recvs[r])
                                             del recvs[r]
                                     filtered = True
-                                    print(message)
-                                    print(filtered)
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
@@ -192,6 +189,7 @@ class Networking:
                                                 'uuid': message['uuid'],
                                                 'last_ping': int(time.time()),
                                             }
+                                            self.on_new_discovery(self._devices)
                                     print(f"sprava prijata: {message}")
                         except (socket.timeout, json.JSONDecodeError):
                             print('com')
@@ -202,7 +200,6 @@ class Networking:
                     with self._devices_lock:
                         old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
                         for ip in old_ips:
-                            print('del old - '+ip)
                             del self._devices[ip]
                             print(f'vymazana stara ip: {ip}')
                     print(self._devices)
@@ -315,66 +312,3 @@ if __name__ == "__main__":
             sys.exit(130)
         except SystemExit:
             os._exit(130)
-
-"""
-    def send_discovery_loop(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32)
-        while self._discovering:
-            sprava = json.dumps(
-                {
-                    'nick': self._nick,
-                    "type": "discovery",
-                    "timestamp": int(time.time()),
-                    "uuid": self._uuid,
-                }
-            ).encode()
-            print('send -', sprava)
-            sock.sendto(sprava, (MGROUP, MPORT))
-            # print(f"sprava poslana: {sprava}")
-            time.sleep(5)
-        sock.close()
-
-    def recv_discovery_loop(self):
-        print('recv discovery')
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(('', MPORT))
-        mreq = ip2bytes(MGROUP) + ip2bytes('0.0.0.0')
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        sock.settimeout(5)
-        while self._discovering:
-            try:
-                data, addr = sock.recvfrom(1024)
-                message = json.loads(data.decode())
-                if message['type'] == 'discovery' and message['uuid'] != self._uuid:
-                    print(message)
-                    ip = addr[0]
-                    with self._devices_lock:
-                        if ip in self._devices:
-                            self._devices[ip]['last_ping'] = int(time.time())
-                        else:
-                            self._devices[ip] = {
-                                'nick': message['nick'],
-                                'uuid': message['uuid'],
-                                'last_ping': int(time.time()),
-                            }
-                    print(f"sprava prijata: {message}")
-            except (socket.timeout, json.JSONDecodeError):
-                continue
-        sock.close()
-
-    # odstranenie starych ipciek zo zoznamu, ak zariadenie nedostalo ping za poslednych 15 sekund
-    def del_old_devices(self):
-        while self._discovering:
-            current_time = int(time.time())
-            with self._devices_lock:
-                old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
-                for ip in old_ips:
-                    print('del old - '+ip)
-                    del self._devices[ip]
-                    print(f'vymazana stara ip: {ip}')
-            print(self._devices)
-            self.on_new_discovery(self._devices)
-            time.sleep(5)
-"""
