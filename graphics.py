@@ -98,8 +98,10 @@ class Graphics:
                 c["y"] += c["speed"]
                 c["x"] += c["angle"]
                 pygame.draw.rect(self.screen, c["color"], (c["x"], c["y"], c["size"], c["size"]))
-
-            text = self.font.render(vyherca + " Vyhral!", True, (255, 255, 255))
+            if vyherca.lower() == "cervena" :
+                text = self.font.render("Vyhral červený!", True, (255, 255, 255))
+            else:
+                text = self.font.render("Vyhral modrý!", True, (255, 255, 255))
             text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
             self.screen.blit(text, text_rect)
 

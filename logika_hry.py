@@ -26,8 +26,8 @@ class LogikaHry :
         self.gra=gr.Graphics(self.POCET_RIADKOV, self.POCET_STLPCOV )
         self.zoznam_policok=[]
         self.pocet_kol=0
-        self.skore_modry=Score()
-        self.skore_cerveny=Score()
+        self.skore_modry=Score(self.POCET_RIADKOV,self.POCET_STLPCOV)
+        self.skore_cerveny=Score(self.POCET_RIADKOV,self.POCET_STLPCOV)
         for i in range(self.POCET_RIADKOV):
             self.zoznam_policok.append([])
             for j in range(self.POCET_STLPCOV):
