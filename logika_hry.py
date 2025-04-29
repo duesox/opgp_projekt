@@ -119,6 +119,8 @@ class LogikaHry :
         return self.VYHRA_MODRA
 
 
+
+
     def vyhodnotHru(self):
         #Kontrola Vodorovne
         # i = riadok, j = stlpec
