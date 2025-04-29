@@ -118,6 +118,18 @@ class LogikaHry :
     def get_Modra(self):
         return self.VYHRA_MODRA
 
+    def dosadenie_cervena(self):
+        self.VYHRA_CERVENA += 1
+        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
+        self.gra.winAnimation("cervena")
+        self.obnovHru()
+        self.gra.clear_board()
+
+    def dosadenie_modra(self):
+        self.VYHRA_MODRA += 1
+        self.gra.winAnimation("modra")
+        self.obnovHru()
+        self.gra.clear_board()
 
 
 
@@ -131,17 +143,10 @@ class LogikaHry :
 
                     #Vyhodnotenie vodorovne
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
-                        self.VYHRA_CERVENA += 1
-                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("cervena")
-                        self.obnovHru()
-                        self.gra.clear_board()
+                        self.dosadenie_cervena()
 
                     else:
-                        self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("modra")
-                        self.obnovHru()
-                        self.gra.clear_board()
+                        self.dosadenie_modra()
 
 
         #Kontrola Vertikálne
@@ -152,17 +157,9 @@ class LogikaHry :
 
                     # Vyhodnotenie vertikálne
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
-                        self.VYHRA_CERVENA += 1
-                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("Cervena")
-                        self.obnovHru()
-                        self.gra.clear_board()
+                        self.dosadenie_cervena()
                     else:
-                        self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("Modra")
-                        self.skore_modry.set_celkove_skore(self.pocet_kol)
-                        self.obnovHru()
-                        self.gra.clear_board()
+                        self.dosadenie_modra()
 
         #Kontrola Krížom
         for i in range(3):
@@ -173,19 +170,9 @@ class LogikaHry :
                     # Vyhodnotenie krížom
 
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
-                        self.VYHRA_CERVENA += 1
-                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("Cervena")
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                        self.dosadenie_cervena()
                     else:
-                        self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("Modra")
-                        self.skore_modry.set_celkove_skore(self.pocet_kol)
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                        self.dosadenie_modra()
 
 
         self.gra.zobraz_skore(self.VYHRA_MODRA, self.VYHRA_CERVENA)
