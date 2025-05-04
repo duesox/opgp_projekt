@@ -76,7 +76,7 @@ class LogikaHry :
             volny_riadok = self.prazdnyRiadok(stlpec)
 
             if volny_riadok is not None:
-                self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.VYHRA_MODRA, self.VYHRA_CERVENA)
+                self.gra.animate_fall(stlpec, volny_riadok, self.hrac,self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
                 self.nastavHod(volny_riadok, stlpec, self.hrac)
                 self.hrac = 2 if self.hrac == 1 else 1
     def prazdnyRiadok(self, stlpec):
@@ -90,7 +90,7 @@ class LogikaHry :
 
     def run(self):
         """Spustí hlavný cyklus hry."""
-        self.gra.draw_board()
+        self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -123,13 +123,14 @@ class LogikaHry :
         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
         self.gra.winAnimation("cervena")
         self.obnovHru()
-        self.gra.clear_board()
+        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
 
     def dosadenie_modra(self):
         self.VYHRA_MODRA += 1
         self.gra.winAnimation("modra")
+        self.skore_modry.set_celkove_skore(self.pocet_kol)
         self.obnovHru()
-        self.gra.clear_board()
+        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
 
 
 
@@ -173,9 +174,17 @@ class LogikaHry :
                         self.dosadenie_cervena()
                     else:
                         self.dosadenie_modra()
+        for i in range(3):
+            for j in range(3, 7):
+                if (self.zoznam_policok[i][j] == self.zoznam_policok[i + 1][j - 1] ==
+                        self.zoznam_policok[i + 2][j - 2] == self.zoznam_policok[i + 3][j - 3] != LogikaHry.PRAZDNO):
+
+                    if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
+                        self.dosadenie_cervena()
+                    else:
+                        self.dosadenie_modra()
 
 
-        self.gra.zobraz_skore(self.VYHRA_MODRA, self.VYHRA_CERVENA)
 
 
 if __name__ == "__main__":

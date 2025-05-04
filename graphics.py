@@ -33,7 +33,7 @@ class Graphics:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("Arial", 80, bold=True)
 
-    def draw_board(self):
+    def draw_board(self,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
         self.screen.fill(self.BG_COLOR)
         for row in range(self.rows):
             for col in range(self.cols):
@@ -44,13 +44,36 @@ class Graphics:
                     col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250,  # X pozícia (stĺpec * veľkosť bunky + polovičná veľkosť).
                     (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),  # Y pozícia (riadok * veľkosť bunky + polovičná veľkosť).
                     self.RADIUS)  # Polomer pre vykreslenie žetónu.
+        self.zobraz_skore(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny,skore)
         pygame.display.update()
 
-    def clear_board(self):
-        self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
-        self.draw_board()
+    def draw_board_no_update(self):
+        pygame.draw.rect(self.screen, self.BG_COLOR, (250, 0, self.cols * self.CELL_SIZE, self.CELL_SIZE))
 
-    def animate_fall(self, col, row, current_player,vyhry_modry,vyhry_cerveny):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                # Súradnice stredu bunky
+                x = col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250
+                y = (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2
+
+                # Súradnice obdĺžnika pozadia bunky
+                rect_x = col * self.CELL_SIZE + 250
+                rect_y = (row + 1) * self.CELL_SIZE
+
+                # Modré pozadie bunky
+                pygame.draw.rect(self.screen, self.BG_COLOR, (rect_x, rect_y, self.CELL_SIZE, self.CELL_SIZE))
+
+                # Zistenie farby žetónu
+                color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
+
+                # Vykreslenie žetónu
+                pygame.draw.circle(self.screen, color, (x, y), self.RADIUS)
+
+    def clear_board(self,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
+        self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+        self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)
+
+    def animate_fall(self, col, row, current_player,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
         # X pozícia, kde bude žetón spadávať (stĺpec * veľkosť bunky + polovičná veľkosť).
         x = col * self.CELL_SIZE + self.CELL_SIZE // 2 +250
         # Počiatočná Y pozícia (na začiatku nad doskou).
@@ -60,15 +83,15 @@ class Graphics:
 
         # Animácia pádu (posúvanie žetónu po Y osi).
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
-            self.draw_board()  # Vykreslí dosku, aby sa žetóny zobrazovali.
+            self.draw_board_no_update()
             pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
-            self.zobraz_skore(vyhry_modry,vyhry_cerveny)
+
             pygame.display.update()  # Aktualizuje obrazovku.
             pygame.time.delay(10)  # Zastaví na 10 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
-        self.draw_board()  # Vykreslí dosku po páde žetónu.
+        self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)  # Vykreslí dosku po páde žetónu.
 
     def winAnimation(self, vyherca):
         confetti_list = []
@@ -111,18 +134,26 @@ class Graphics:
 
             pygame.display.flip()
 
-    def zobraz_skore(self, vyhry_modry, vyhry_cerveny):
+    def zobraz_skore(self, vyhry_modry, vyhry_cerveny,skore_modry,skore_cerveny,skore_max):
         # Vymaže ľavú stranu (kde je skóre)
         pygame.draw.rect(self.screen, self.BG_COLOR, (0, 0, 200, self.HEIGHT))
 
         # Pozície pre text naľavo
         x_pos = 20
-        y_pos_cerveny = self.CELL_SIZE
-        y_pos_modry = y_pos_cerveny + 40
+        y_pos_max = self.CELL_SIZE
 
+        max_skore_text=self.small_font.render(f"Max skóre:", True, (255, 255, 255))
+        max_skore=self.small_font.render(f"{skore_max}", True, (255, 255, 255))
         cerveny_text = self.small_font.render(f"Červený: {vyhry_cerveny}", True, (255, 0, 0))
-        modry_text = self.small_font.render(f"Modrý: {vyhry_modry}", True, (0, 0, 255))
+        cerveny_skore= self.small_font.render(f"Skóre: {skore_cerveny}", True, (255, 0, 0))
 
-        self.screen.blit(cerveny_text, (x_pos, y_pos_cerveny))
-        self.screen.blit(modry_text, (x_pos, y_pos_modry))
+        modry_text = self.small_font.render(f"Modrý: {vyhry_modry}", True, (0, 0, 255))
+        modry_skore= self.small_font.render(f"Skóre: {skore_modry}", True, (0, 0, 255))
+
+        self.screen.blit(max_skore_text, (x_pos, y_pos_max))
+        self.screen.blit(max_skore, (x_pos, y_pos_max+50))
+        self.screen.blit(cerveny_text, (x_pos, y_pos_max+100))
+        self.screen.blit(cerveny_skore, (x_pos, y_pos_max+150))
+        self.screen.blit(modry_text, (x_pos, y_pos_max+200))
+        self.screen.blit(modry_skore, (x_pos, y_pos_max+250))
         pygame.display.update()
