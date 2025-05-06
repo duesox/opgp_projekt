@@ -4,6 +4,9 @@ import threading
 import uuid
 import netifaces
 import select
+import comtypes.client as cc
+from comtypes import COMError
+import ctypes
 
 import json
 import socket
@@ -13,6 +16,7 @@ PORT = 4037
 MPORT = 4038  # multicast port
 MGROUP = '224.0.0.123'
 UUID_FILE = 'uuid.txt'
+PROTOCOLS = {6: 'tcp', 17: 'udp'}
 
 
 # ip add return as bits
@@ -22,6 +26,93 @@ def ip2bytes(addr):
 
 def send_message(message, sock):
     sock.send(json.dumps(message).encode())
+
+# nova firewall rule - vstup prot ID, port, dir: in - 1, out - 2
+def _create_firewall_rule(protocol, port, direction):
+    print(protocol, port, direction)
+    fw_policy = cc.CreateObject("HNetCfg.FwPolicy2")
+    rules = fw_policy.Rules
+    rule = cc.CreateObject("HNetCfg.FWRule")
+    if direction == 1:
+        dire = "In"
+    else:
+        dire = "Out"
+    rule.Name = f"4Connect {PROTOCOLS[protocol]} {dire}"
+    rule.Direction = direction
+    rule.Protocol = protocol
+    rule.LocalPorts = str(port)
+    rule.Action = 1
+    rule.Enabled = 1
+    rules.Add(rule)
+    return rule.Name
+
+# kontrola, ci uz nejake firewall rules co chceme skontrolovat existuju, ak ano, vracia sa zoznam existujucich rules
+def _check_firewall_rules(rules_to_check):
+    existing_rules = []
+    try:
+        fw_policy = cc.CreateObject("HNetCfg.FwPolicy2")
+        rules = fw_policy.Rules
+        for rule in rules:
+            if not rule.Enabled or rule.Action != 1:
+                continue
+            for target in rules_to_check:
+                if (rule.Protocol == target['protocol'] and
+                        rule.Direction == target['direction'] and
+                        str(target['port']) in rule.LocalPorts.split(',')):
+                    existing_rules.append({'protocol': target['protocol'],
+                                           'port': target['port'],
+                                           'direction': target['direction']})
+    except COMError as e:
+        print("Check - chyba pri pristupe ku Firewall -", {e})
+    return existing_rules
+
+# sprava celeho procesu vytvarania rules
+def _manage_firewall_rules():
+    required_rules = [
+        {'protocol': 6, 'port': 4037, 'direction': 1},
+        {'protocol': 6, 'port': 4037, 'direction': 2},
+        {'protocol': 17, 'port': 4038, 'direction': 1},
+        {'protocol': 17, 'port': 4038, 'direction': 2}
+    ]
+    try:
+        existing = _check_firewall_rules(required_rules)
+        for rule in existing:
+            if rule in required_rules:
+                del required_rules[required_rules.index(rule)]
+        print(existing)
+        print(len(required_rules))
+        print(required_rules)
+        time.sleep(5)
+        if len(required_rules) > 0:
+            if not is_admin():
+                ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+                sys.exit()
+
+        created = []
+        for e in existing:
+            print({e['protocol'], e['port'], e['direction']})
+        for rule in required_rules:
+            rule_name = _create_firewall_rule(rule['protocol'], rule['port'], rule['direction'])
+            created.append(rule_name)
+        if len(created) > 0:
+            for name in created:
+                print(f"nova rule: {name}")
+            time.sleep(5)
+            ctypes.windll.shell32.ShellExecuteW(None, "open", sys.executable, f'"{sys.argv[0]}" --no-elevate', None, 1)
+            sys.exit()
+        else:
+            print("uz vsetky rules existuju")
+    except COMError as e:
+        print("Chyba pri pristupe ku Firewall -", {e})
+    except Exception as e:
+        print("chyba", e)
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except Exception as e:
+        print(e)
+        return False
 
 
 class Networking:
@@ -71,6 +162,8 @@ class Networking:
             self._uuid = str(uuid.uuid4())
             with open(UUID_FILE, 'w') as f:
                 f.write(str(self._uuid))
+
+        _manage_firewall_rules()
 
     def get_uuid(self):
         print(self._uuid)
@@ -129,7 +222,6 @@ class Networking:
 
     def discovery_loop(self):
         while not self._stop_event.is_set():
-            filtered = False
             previous_send_recv = 0
             previous_del = 0
             recvs = {}
@@ -169,7 +261,7 @@ class Networking:
                     # si
                     # naposledy
                     # skoncil
-                    ready_socks = select.select(list(recvs.keys()), [], [], 5)[0]
+                    ready_socks = select.select(list(recvs.keys()), [], [], 1)[0]
                     if not ready_socks:
                         self._nic += 1
                     else:
@@ -179,13 +271,10 @@ class Networking:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
                                 if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
-
                                     for r in list(recvs.keys()):
                                         if r != recv:
                                             print('DEL', recvs[r])
                                             del recvs[r]
-                                    filtered = True
-
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
@@ -312,7 +401,7 @@ if __name__ == "__main__":
     net = Networking()
     try:
         net.get_uuid()
-        print(net.handle_message(b'{"type": "disconnect"}'))
+        # print(net.handle_message(b'{"type": "disconnect"}'))
         net.start_discovery()
         while True:
             time.sleep(1)
