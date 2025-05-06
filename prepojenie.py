@@ -82,7 +82,6 @@ def _manage_firewall_rules():
         print(existing)
         print(len(required_rules))
         print(required_rules)
-        time.sleep(5)
         if len(required_rules) > 0:
             if not is_admin():
                 ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
@@ -96,7 +95,7 @@ def _manage_firewall_rules():
             created.append(rule_name)
         if len(created) > 0:
             for name in created:
-                print(f"nova rule: {name}")
+                print(f"nova firewall rule: {name}")
             time.sleep(5)
             ctypes.windll.shell32.ShellExecuteW(None, "open", sys.executable, f'"{sys.argv[0]}" --no-elevate', None, 1)
             sys.exit()
@@ -191,15 +190,7 @@ class Networking:
         self._discovering = True
         self._disc_thread = threading.Thread(target=self.discovery_loop)
         self._disc_thread.start()
-        """
-        self._send_thread = threading.Thread(target=self.send_discovery_loop)
-        self._recv_thread = threading.Thread(target=self.recv_discovery_loop)
-        self._del_old_dev_thread = threading.Thread(target=self.del_old_devices)
-        self._send_thread.start()
-        self._recv_thread.start()
-        self._del_old_dev_thread.start()
-        """
-        # print('zacate vyhladavanie')
+        print('zacate vyhladavanie')
 
     # toto treba osetrit, aby pri vypnuti programu sa vykonalo spolocne so stop_tcp_listen
     #
@@ -210,15 +201,7 @@ class Networking:
         if self._disc_thread is not None:
             while self._disc_thread.is_alive():
                 self._disc_thread.join(timeout=1)
-        """
-        if self._send_thread is not None:
-            self._send_thread.join()
-        if self._recv_thread is not None:
-            self._recv_thread.join()
-        if self._del_old_dev_thread is not None:
-            self._del_old_dev_thread.join()
-        """
-        # print("ukoncene vyhladavanie")
+        print("ukoncene sietovanie")
 
     def discovery_loop(self):
         while not self._stop_event.is_set():
@@ -271,10 +254,12 @@ class Networking:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
                                 if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
+                                    """
                                     for r in list(recvs.keys()):
                                         if r != recv:
                                             print('DEL', recvs[r])
                                             del recvs[r]
+                                    """
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
