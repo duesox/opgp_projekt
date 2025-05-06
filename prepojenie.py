@@ -31,6 +31,7 @@ class Networking:
         self._devices_lock = threading.Lock()
         self._self_address = socket.gethostbyname(socket.gethostname())
         self._discovering = False
+        self._nic = 0
 
         self._nick = None
 
@@ -55,11 +56,12 @@ class Networking:
         self.on_disconnect = lambda: None
         self.on_new_discovery = lambda devices: None
 
+        self.no_devices_found = lambda: None
+
         self._x_size = 7
         self._y_size = 6
         self._max_wins = 3
 
-        # toto potom treba zmenit na False; v realnom programe ked sa zapina discovery okno sa to nastavi na True a potom, ak sa z neho alebo z hry odide, tak sa nastavi na false
         self._tcp_recieving = False
 
         if os.path.exists(UUID_FILE):
@@ -92,6 +94,7 @@ class Networking:
         return self._x_size, self._y_size, self._max_wins
 
     def start_discovery(self):
+        self._nic = 0
         self._discovering = True
         self._disc_thread = threading.Thread(target=self.discovery_loop)
         self._disc_thread.start()
@@ -167,18 +170,21 @@ class Networking:
                     # skoncil
                     ready_socks = select.select(list(recvs.keys()), [], [], 2)[0]
                     if not ready_socks:
-                        pass
+                        self._nic += 1
                     else:
+                        self._nic = 0
                         try:
                             for recv in ready_socks:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
                                 if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
+                                    """
                                     for r in list(recvs.keys()):
                                         if r != recv:
                                             print('DEL', recvs[r])
                                             del recvs[r]
                                     filtered = True
+                                    """
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
@@ -194,7 +200,9 @@ class Networking:
                         except (socket.timeout, json.JSONDecodeError):
                             print('com')
                             continue
-
+                if self._nic >= 6:
+                    # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
+                    self.no_devices_found()
                 if current_time - previous_del > 15:
                     previous_del = current_time
                     with self._devices_lock:
@@ -237,17 +245,20 @@ class Networking:
 
     def handle_message(self, recv):
         message = json.loads(recv.decode())
-        action = message['type']
-        if action == 'accept' and self._game_started is False:
-            self.handle_accept(message)
-        elif action == 'disconnect':
-            self.handle_disconnect()
-        elif action == 'move':
-            self.handle_move(message)
-        elif action == 'settings':
-            self.handle_settings(message)
+        if 'uuid' not in message.keys() or message['uuid'] == self._uuid:
+            pass
         else:
-            print("Invalid message type")
+            action = message['type']
+            if action == 'accept' and self._game_started is False:
+                self.handle_accept(message)
+            elif action == 'disconnect':
+                self.handle_disconnect()
+            elif action == 'move':
+                self.handle_move(message)
+            elif action == 'settings':
+                self.handle_settings(message)
+            else:
+                print("Invalid message type")
 
     def handle_accept(self, message):
         if message['confirm'] == 'confirm':
