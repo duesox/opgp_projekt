@@ -146,6 +146,7 @@ class Networking:
                 mreq = ip2bytes(MGROUP) + ip2bytes(netifaces.ifaddresses(i)[2][0]['addr'])  # tu musi byt presne zadana ipcka interfacu s inteom - bud ethernet alebo skor wifi
                 j.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
                 j.settimeout(1)
+                j.setblocking(False)
                 recvs[j] = netifaces.ifaddresses(i)[2][0]['addr']
 
             while self._discovering:
@@ -168,7 +169,7 @@ class Networking:
                     # si
                     # naposledy
                     # skoncil
-                    ready_socks = select.select(list(recvs.keys()), [], [], 2)[0]
+                    ready_socks = select.select(list(recvs.keys()), [], [], 5)[0]
                     if not ready_socks:
                         self._nic += 1
                     else:
@@ -178,13 +179,13 @@ class Networking:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
                                 if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
-                                    """
+
                                     for r in list(recvs.keys()):
                                         if r != recv:
                                             print('DEL', recvs[r])
                                             del recvs[r]
                                     filtered = True
-                                    """
+
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
