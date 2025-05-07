@@ -103,7 +103,7 @@ class LogikaHry :
             elif self.state == "about":
                 self.gra.show_about()
             elif self.state == "game":
-                leave_button = self.gra.draw_board()
+                leave_button = self.gra.draw_board(self.VYHRA_MODRA,self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -120,9 +120,9 @@ class LogikaHry :
 
                     elif self.state == "play_menu":
                         if buttons[0].collidepoint(event.pos):
-                            self.gra.clear_board()
+                            self.gra.clear_board(self.VYHRA_MODRA,self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
                             self.state = "game"
-                            self.gra.draw_board()
+                            self.gra.draw_board(self.VYHRA_MODRA,self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
                         elif buttons[1].collidepoint(event.pos):
                             pass  # Online not implemented
 
