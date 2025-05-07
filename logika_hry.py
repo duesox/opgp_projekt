@@ -33,6 +33,8 @@ class LogikaHry :
             for j in range(self.POCET_STLPCOV):
                 self.zoznam_policok[i].append(self.PRAZDNO)
         self.running=True
+        self.state = "main_menu"
+
 
 
     #Metóda na vymazanie dát zo zoznamu
@@ -87,16 +89,52 @@ class LogikaHry :
                 return row
         return None  # Ak nie je voľný riadok, vracia None.
 
-
     def run(self):
+
         """Spustí hlavný cyklus hry."""
         self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+
         while self.running:
+            self.gra.clock.tick(60)
+            if self.state == "main_menu":
+                buttons = self.gra.show_main_menu()
+            elif self.state == "play_menu":
+                buttons = self.gra.show_play_menu()
+            elif self.state == "about":
+                self.gra.show_about()
+            elif self.state == "game":
+                leave_button = self.gra.draw_board()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.running=False
+                    self.running = False
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    self.kliknutie(event.pos[0])
+                    if self.state == "main_menu":
+                        if buttons[0].collidepoint(event.pos):
+                            self.state = "play_menu"
+                        elif buttons[1].collidepoint(event.pos):
+                            self.state = "about"
+                        elif buttons[2].collidepoint(event.pos):
+                            self.running = False
+
+                    elif self.state == "play_menu":
+                        if buttons[0].collidepoint(event.pos):
+                            self.gra.clear_board()
+                            self.state = "game"
+                            self.gra.draw_board()
+                        elif buttons[1].collidepoint(event.pos):
+                            pass  # Online not implemented
+
+                    elif self.state == "about":
+                        self.state = "main_menu"
+
+                    elif self.state == "game":
+                        if leave_button.collidepoint(event.pos):
+                            self.gra.clear_board()
+                            self.state = "main_menu"
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            self.kliknutie(event.pos[0])
 
         pygame.quit()
         sys.exit()

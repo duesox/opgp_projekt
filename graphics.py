@@ -1,17 +1,13 @@
-# !!! importujte si pyGame pred spustenim !!!
-import pygame  # Importuje pygame knižnicu, ktorá sa používa na vytváranie hier a grafických aplikácií.
+import pygame
 import random
-import sys  # Importuje knižnicu sys na manipuláciu so systémovými operáciami, ako je ukončenie programu.
+import sys
 
 class Graphics:
-
-    # Konštanty pre hru
-    CELL_SIZE = 100  # Veľkosť jednej bunky na mriežke (100x100 px)
-    RADIUS = CELL_SIZE // 2 - 5  # Polomer pre vykreslenie žetónov (rádovo o 5 px menší než polomer bunky)
-
-    BG_COLOR = (0, 0, 139)  # Tmavo modrá farba pozadia
-    EMPTY_COLOR = (220, 220, 220)  # Svetlo šedá farba pre prázdne polia
-    PLAYER_COLORS = [(0, 0, 255), (255, 0, 0)]  # Farby hráčov: Modrá a Červená (RGB)
+    CELL_SIZE = 100
+    RADIUS = CELL_SIZE // 2 - 5
+    BG_COLOR = (0, 0, 139)
+    EMPTY_COLOR = (220, 220, 220)
+    PLAYER_COLORS = [(0, 0, 255), (255, 0, 0)]
 
     def __init__(self, rows, cols):
         pygame.init()  # Inicializuje Pygame knižnicu.
@@ -30,22 +26,37 @@ class Graphics:
 
         self.WIDTH, self.HEIGHT = 950, 700
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+        pygame.display.set_caption("Connect 4")
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("Arial", 80, bold=True)
+        self.font = pygame.font.SysFont("Arial", 40, bold=True)
+        self.big_font = pygame.font.SysFont("Arial", 60, bold=True)
+        self.board = [[0 for _ in range(cols)] for _ in range(rows)]
+        self.running = True
+
+    def draw_text_centered(self, text, y, size=40):
+        font = pygame.font.SysFont("Arial", size)
+        txt = font.render(text, True, (255, 255, 255))
+        rect = txt.get_rect(center=(self.WIDTH // 2, y))
+        self.screen.blit(txt, rect)
+        return rect
 
     def draw_board(self,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
         self.screen.fill(self.BG_COLOR)
         for row in range(self.rows):
             for col in range(self.cols):
-                # Ak je pole prázdne (0), použije sa farba EMPTY_COLOR, inak sa použije farba hráča.
                 color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
-                # Vykreslí žetón (kruh) na danú pozíciu (row, col) s vybranou farbou.
                 pygame.draw.circle(self.screen, color, (
-                    col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250,  # X pozícia (stĺpec * veľkosť bunky + polovičná veľkosť).
-                    (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),  # Y pozícia (riadok * veľkosť bunky + polovičná veľkosť).
-                    self.RADIUS)  # Polomer pre vykreslenie žetónu.
+                    col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250,
+                    (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),
+                    self.RADIUS)
+        leave_button = pygame.Rect(10, 10, 120, 50)
+        pygame.draw.rect(self.screen, (255, 0, 0), leave_button)
+        leave_txt = self.font.render("Leave", True, (255, 255, 255))
+        self.screen.blit(leave_txt, (20, 15))
+
         self.zobraz_skore(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny,skore)
         pygame.display.update()
+        return leave_button
 
     def draw_board_no_update(self):
         pygame.draw.rect(self.screen, self.BG_COLOR, (250, 0, self.cols * self.CELL_SIZE, self.CELL_SIZE))
@@ -71,6 +82,7 @@ class Graphics:
 
     def clear_board(self,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+
         self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)
 
     def animate_fall(self, col, row, current_player,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
@@ -78,7 +90,6 @@ class Graphics:
         x = col * self.CELL_SIZE + self.CELL_SIZE // 2 +250
         # Počiatočná Y pozícia (na začiatku nad doskou).
         y_start = self.CELL_SIZE // 2
-        # Konečná Y pozícia (na riadku, kam žetón spadne).
         y_end = (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2
 
         # Animácia pádu (posúvanie žetónu po Y osi).
@@ -100,10 +111,7 @@ class Graphics:
                 "x": random.randint(0, self.WIDTH),
                 "y": random.randint(-100, -10),
                 "size": random.randint(4, 8),
-                "color": random.choice([
-                    (255, 0, 0), (0, 255, 0), (0, 100, 255),
-                    (255, 255, 0), (255, 0, 255), (0, 255, 255)
-                ]),
+                "color": random.choice([(255, 0, 0), (0, 255, 0), (0, 100, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]),
                 "speed": random.uniform(2, 5),
                 "angle": random.uniform(-0.1, 0.1)
             }
@@ -113,18 +121,50 @@ class Graphics:
         while running:
             self.clock.tick(60)
             self.screen.fill((30, 30, 30))
-
-
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT or event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     running = False
-                if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                    running = False
-
             for c in confetti_list:
                 c["y"] += c["speed"]
                 c["x"] += c["angle"]
                 pygame.draw.rect(self.screen, c["color"], (c["x"], c["y"], c["size"], c["size"]))
+            text = self.big_font.render(vyherca + " Vyhral!", True, (255, 255, 255))
+            rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
+            self.screen.blit(text, rect)
+            pygame.display.flip()
+
+    def show_main_menu(self):
+        self.screen.fill((30, 30, 30))
+        play_rect = self.draw_text_centered("Play", 200)
+        about_rect = self.draw_text_centered("About", 300)
+        exit_rect = self.draw_text_centered("Exit", 400)
+        pygame.display.update()
+        return play_rect, about_rect, exit_rect
+
+    def show_play_menu(self):
+        self.screen.fill((30, 30, 30))
+        local_rect = self.draw_text_centered("On this device", 250)
+        online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
+        pygame.display.update()
+        return local_rect, online_rect
+
+    def show_about(self):
+        self.screen.fill((30, 30, 30))
+        lines = [
+            "Hra Connect 4 je pre dvoch hráčov.",
+            "Hráči striedavo vhadzujú žetóny do stĺpcov.",
+            "Cieľom je mať 4 rovnaké žetóny v rade - horizontálne, vertikálne alebo diagonálne.",
+            "Hráč, ktorý to dosiahne ako prvý, vyhráva.",
+            "Ak je mriežka plná a nikto nevyhral, je to remíza.",
+            "Klikni hocikde pre návrat do menu."
+        ]
+        y = 150
+        for line in lines:
+            self.draw_text_centered(line, y, 30)
+            y += 50
+        pygame.display.update()
+
+
             if vyherca.lower() == "cervena" :
                 text = self.font.render("Vyhral červený!", True, (255, 255, 255))
             else:
