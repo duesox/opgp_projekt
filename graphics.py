@@ -154,6 +154,56 @@ class Graphics:
         pygame.display.update()
         return local_rect, online_rect
 
+    import pygame
+
+    def show_network(self, lastOnlines, uuids, nicks=[]):
+        self.screen.fill((30, 30, 30))
+
+        font_main = pygame.font.SysFont("Arial", 20)
+        font_small = pygame.font.SysFont("Arial", 14)
+
+        block_width = 500
+        block_height = 60
+        margin = 20
+        start_y = 100  # Leave space for header
+
+        screen_width, _ = self.screen.get_size()
+        block_x = (screen_width - block_width) // 2  # Center horizontally
+
+        # --- Draw "Leave" Button (top-left) ---
+        leave_rect = pygame.Rect(20, 20, 80, 35)
+        pygame.draw.rect(self.screen, (200, 70, 70), leave_rect, border_radius=5)
+        leave_text = font_main.render("Leave", True, (255, 255, 255))
+        self.screen.blit(leave_text, (leave_rect.x + 10, leave_rect.y + 5))
+
+        for i in range(len(uuids)):
+            nick = nicks[i] if i < len(nicks) else ""
+            uuid = uuids[i]
+            last = lastOnlines[i] + "s ago"
+
+            y = start_y + i * (block_height + margin)
+
+            # Draw outer block
+            pygame.draw.rect(self.screen, (50, 50, 50), (block_x, y, block_width, block_height), border_radius=6)
+
+            # Draw "Nick", UUID, Last Online
+            nick_text = font_main.render(nick, True, (255, 255, 255))
+            uuid_text = font_small.render(uuid, True, (200, 200, 200))
+            last_text = font_main.render(last, True, (180, 180, 180))
+
+            self.screen.blit(nick_text, (block_x + 10, y + 5))
+            self.screen.blit(uuid_text, (block_x + 10, y + 30))
+            self.screen.blit(last_text, (block_x + block_width - last_text.get_width() - 10, y + 5))
+
+            # Draw "Invite" button
+            invite_rect = pygame.Rect(block_x + block_width // 2 - 40, y + 10, 80, 35)
+            pygame.draw.rect(self.screen, (100, 150, 250), invite_rect, border_radius=5)
+            invite_text = font_main.render("Invite", True, (0, 0, 0))
+            self.screen.blit(invite_text, (invite_rect.x + 10, invite_rect.y + 5))
+
+        pygame.display.update()
+        return leave_rect, invite_rect
+
     def show_about(self):
         self.screen.fill((30, 30, 30))
         lines = [

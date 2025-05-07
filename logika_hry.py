@@ -102,6 +102,8 @@ class LogikaHry :
                 buttons = self.gra.show_play_menu()
             elif self.state == "about":
                 self.gra.show_about()
+            elif self.state == "discovery":
+                buttons = self.gra.show_network(['12'], ['5U3km@d1Ck'], ['Profi Konektor 3+1']) # len testovacie udaje - potom zmenit
             elif self.state == "game":
                 leave_button = self.gra.draw_board(self.VYHRA_MODRA,self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
 
@@ -124,7 +126,21 @@ class LogikaHry :
                             self.state = "game"
                             self.gra.draw_board(self.VYHRA_MODRA,self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
                         elif buttons[1].collidepoint(event.pos):
-                            pass  # Online not implemented
+                            self.state = "discovery"
+                            self.gra.show_network(['12'], ['5U3km@d1Ck'],['Profi Konektor 3+1'])  # len testovacie udaje - potom zmenit
+
+                    elif self.state == "discovery":
+                        if buttons[0].collidepoint(event.pos):
+                            self.state = "main_menu"
+                        elif buttons[1].collidepoint(event.pos): # TODO !!! Tu treba poslat invite !!!
+                            self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
+                                                 self.skore_modry.get_celkove_skore(),
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                            self.state = "game"
+                            self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
+                                                self.skore_modry.get_celkove_skore(),
+                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+
 
                     elif self.state == "about":
                         self.state = "main_menu"
