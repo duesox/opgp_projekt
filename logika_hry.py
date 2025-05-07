@@ -26,8 +26,8 @@ class LogikaHry :
         self.gra=gr.Graphics(self.POCET_RIADKOV, self.POCET_STLPCOV )
         self.zoznam_policok=[]
         self.pocet_kol=0
-        self.skore_modry=Score()
-        self.skore_cerveny=Score()
+        self.skore_modry=Score(self.POCET_RIADKOV,self.POCET_STLPCOV)
+        self.skore_cerveny=Score(self.POCET_RIADKOV,self.POCET_STLPCOV)
         for i in range(self.POCET_RIADKOV):
             self.zoznam_policok.append([])
             for j in range(self.POCET_STLPCOV):
@@ -65,19 +65,22 @@ class LogikaHry :
             self.zoznam_policok[riadok][stlpec] = LogikaHry.MODRA
         self.vyhodnotHru()
 
-
     def kliknutie(self, x_pozicia):
         """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
-        stlpec = x_pozicia // self.gra.CELL_SIZE  # Určí stĺpec, na ktorý bolo kliknuté (podľa X pozície kliknutia).
-        volny_riadok = self.prazdnyRiadok(stlpec)  # Získa prvý voľný riadok v tomto stĺpci.
-        if volny_riadok is not None:  # Ak je voľný riadok.
-            self.gra.animate_fall(stlpec, volny_riadok, self.hrac)  # Spustí animáciu pádu žetónu.
-            self.nastavHod(volny_riadok, stlpec, self.hrac)
-            if self.hrac==1:
-                self.hrac = 2
-            else:
-                self.hrac=1
 
+        # Určí šírku hracej plochy
+        sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+        offset = 250  # Posun hracej plochy doprava o 250 px
+
+        # Skontroluje, či kliknutie je v rámci hracej plochy
+        if offset <= x_pozicia <= offset + sirka_hracej_plochy:
+            stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+            volny_riadok = self.prazdnyRiadok(stlpec)
+
+            if volny_riadok is not None:
+                self.gra.animate_fall(stlpec, volny_riadok, self.hrac,self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+                self.nastavHod(volny_riadok, stlpec, self.hrac)
+                self.hrac = 2 if self.hrac == 1 else 1
     def prazdnyRiadok(self, stlpec):
         """Vráti prvý voľný riadok v danom stĺpci, alebo None ak je plný."""
         # Prechádza všetky riadky v danom stĺpci (odspodu).
@@ -87,6 +90,10 @@ class LogikaHry :
         return None  # Ak nie je voľný riadok, vracia None.
 
     def run(self):
+
+        """Spustí hlavný cyklus hry."""
+        self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+
         while self.running:
             self.gra.clock.tick(60)
             if self.state == "main_menu":
@@ -149,6 +156,21 @@ class LogikaHry :
     def get_Modra(self):
         return self.VYHRA_MODRA
 
+    def dosadenie_cervena(self):
+        self.VYHRA_CERVENA += 1
+        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
+        self.gra.winAnimation("cervena")
+        self.obnovHru()
+        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+
+    def dosadenie_modra(self):
+        self.VYHRA_MODRA += 1
+        self.gra.winAnimation("modra")
+        self.skore_modry.set_celkove_skore(self.pocet_kol)
+        self.obnovHru()
+        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+
+
 
     def vyhodnotHru(self):
         #Kontrola Vodorovne
@@ -160,16 +182,11 @@ class LogikaHry :
 
                     #Vyhodnotenie vodorovne
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
-                        self.VYHRA_CERVENA += 1
-                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("Cerveny")
-                        self.obnovHru()
-                        self.gra.clear_board()
+                        self.dosadenie_cervena()
+
                     else:
-                        self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("Modry")
-                        self.obnovHru()
-                        self.gra.clear_board()
+                        self.dosadenie_modra()
+
 
         #Kontrola Vertikálne
         for i in range(3):
@@ -179,19 +196,9 @@ class LogikaHry :
 
                     # Vyhodnotenie vertikálne
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
-                        self.VYHRA_CERVENA += 1
-                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("Cervena")
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                        self.dosadenie_cervena()
                     else:
-                        self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("Modra")
-                        self.skore_modry.set_celkove_skore(self.pocet_kol)
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                        self.dosadenie_modra()
 
         #Kontrola Krížom
         for i in range(3):
@@ -202,38 +209,20 @@ class LogikaHry :
                     # Vyhodnotenie krížom
 
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
-                        self.VYHRA_CERVENA += 1
-                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("Cervena")
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                        self.dosadenie_cervena()
                     else:
-                        self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("Modra")
-                        self.skore_modry.set_celkove_skore(self.pocet_kol)
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                        self.dosadenie_modra()
+        for i in range(3):
+            for j in range(3, 7):
+                if (self.zoznam_policok[i][j] == self.zoznam_policok[i + 1][j - 1] ==
+                        self.zoznam_policok[i + 2][j - 2] == self.zoznam_policok[i + 3][j - 3] != LogikaHry.PRAZDNO):
 
-                if (self.zoznam_policok[i][j+3]==self.zoznam_policok[i+1][j+2]==self.zoznam_policok[i+2][j+1]==
-                        self.zoznam_policok[i+3][j]!=LogikaHry.PRAZDNO):
-
-                    # Vyhodnotenie krížom
-                    if self.zoznam_policok[i][j+3] == LogikaHry.CERVENA:
-                        self.VYHRA_CERVENA += 1
-                        self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-                        self.gra.winAnimation("Cervena")
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                    if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
+                        self.dosadenie_cervena()
                     else:
-                        self.VYHRA_MODRA += 1
-                        self.gra.winAnimation("Modra")
-                        self.skore_modry.set_celkove_skore(self.pocet_kol)
-                        self.obnovHru()
-                        self.gra.draw_board()
-                        self.gra.clear_board()
+                        self.dosadenie_modra()
+
+
 
 
 if __name__ == "__main__":
