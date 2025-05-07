@@ -210,6 +210,7 @@ class Networking:
             recvs = {}
             send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+            send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
             for i in netifaces.interfaces():
                 if "Virtual" in i or "virtual" in i or "loop" in i or "Loop" in i or 2 not in netifaces.ifaddresses(i).keys():
                     continue
