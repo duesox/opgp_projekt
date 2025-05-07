@@ -213,7 +213,8 @@ class Networking:
             send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
             for i in netifaces.interfaces():
                 if "Virtual" in i or "virtual" in i or "loop" in i or "Loop" in i or 2 not in netifaces.ifaddresses(i).keys():
-                    continue
+                    if i not in ['vpn', 'Vpn', 'VPN']:
+                        continue
                 print(i)
                 j = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 j.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
