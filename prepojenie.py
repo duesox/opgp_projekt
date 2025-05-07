@@ -264,7 +264,11 @@ class Networking:
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
+                                            if self._devices[ip]['last_ping'] == message['timestamp']:
+                                                print("skipnuty rovnaky timestamp")
+                                                continue
                                             self._devices[ip]['last_ping'] = int(time.time())
+                                            print("zmeneny timestamp")
                                         else:
                                             self._devices[ip] = {
                                                 'nick': message['nick'],
@@ -272,9 +276,9 @@ class Networking:
                                                 'last_ping': int(time.time()),
                                             }
                                             self.on_new_discovery(self._devices)
+                                            print("pridane zar")
                                     print(f"sprava prijata: {message}")
                         except (socket.timeout, json.JSONDecodeError):
-                            print('com')
                             continue
                 if self._nic >= 6:
                     # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
