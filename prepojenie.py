@@ -247,6 +247,7 @@ class Networking:
                     # naposledy
                     # skoncil
                     ready_socks = select.select(list(recvs.keys()), [], [], 1)[0]
+                    # treba zmenit timeout na premenlivu hodnotu, ktora vychadza z casu do najblizsieho framu pygamu
                     if not ready_socks:
                         self._nic += 1
                     else:
