@@ -4,6 +4,9 @@ import threading
 import uuid
 import netifaces
 import select
+import comtypes.client as cc
+from comtypes import COMError
+import ctypes
 
 import json
 import socket
@@ -13,6 +16,7 @@ PORT = 4037
 MPORT = 4038  # multicast port
 MGROUP = '224.0.0.123'
 UUID_FILE = 'uuid.txt'
+PROTOCOLS = {6: 'tcp', 17: 'udp'}
 
 
 # ip add return as bits
@@ -23,6 +27,92 @@ def ip2bytes(addr):
 def send_message(message, sock):
     sock.send(json.dumps(message).encode())
 
+# nova firewall rule - vstup prot ID, port, dir: in - 1, out - 2
+def _create_firewall_rule(protocol, port, direction):
+    print(protocol, port, direction)
+    fw_policy = cc.CreateObject("HNetCfg.FwPolicy2")
+    rules = fw_policy.Rules
+    rule = cc.CreateObject("HNetCfg.FWRule")
+    if direction == 1:
+        dire = "In"
+    else:
+        dire = "Out"
+    rule.Name = f"4Connect {PROTOCOLS[protocol]} {dire}"
+    rule.Direction = direction
+    rule.Protocol = protocol
+    rule.LocalPorts = str(port)
+    rule.Action = 1
+    rule.Enabled = 1
+    rules.Add(rule)
+    return rule.Name
+
+# kontrola, ci uz nejake firewall rules co chceme skontrolovat existuju, ak ano, vracia sa zoznam existujucich rules
+def _check_firewall_rules(rules_to_check):
+    existing_rules = []
+    try:
+        fw_policy = cc.CreateObject("HNetCfg.FwPolicy2")
+        rules = fw_policy.Rules
+        for rule in rules:
+            if not rule.Enabled or rule.Action != 1:
+                continue
+            for target in rules_to_check:
+                if (rule.Protocol == target['protocol'] and
+                        rule.Direction == target['direction'] and
+                        str(target['port']) in rule.LocalPorts.split(',')):
+                    existing_rules.append({'protocol': target['protocol'],
+                                           'port': target['port'],
+                                           'direction': target['direction']})
+    except COMError as e:
+        print("Check - chyba pri pristupe ku Firewall -", {e})
+    return existing_rules
+
+# sprava celeho procesu vytvarania rules
+def _manage_firewall_rules():
+    required_rules = [
+        {'protocol': 6, 'port': 4037, 'direction': 1},
+        {'protocol': 6, 'port': 4037, 'direction': 2},
+        {'protocol': 17, 'port': 4038, 'direction': 1},
+        {'protocol': 17, 'port': 4038, 'direction': 2}
+    ]
+    try:
+        existing = _check_firewall_rules(required_rules)
+        for rule in existing:
+            if rule in required_rules:
+                del required_rules[required_rules.index(rule)]
+        print(existing)
+        print(len(required_rules))
+        print(required_rules)
+        if len(required_rules) > 0:
+            if not is_admin():
+                ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+                sys.exit()
+
+        created = []
+        for e in existing:
+            print({e['protocol'], e['port'], e['direction']})
+        for rule in required_rules:
+            rule_name = _create_firewall_rule(rule['protocol'], rule['port'], rule['direction'])
+            created.append(rule_name)
+        if len(created) > 0:
+            for name in created:
+                print(f"nova firewall rule: {name}")
+            time.sleep(5)
+            ctypes.windll.shell32.ShellExecuteW(None, "open", sys.executable, f'"{sys.argv[0]}" --no-elevate', None, 1)
+            sys.exit()
+        else:
+            print("uz vsetky rules existuju")
+    except COMError as e:
+        print("Chyba pri pristupe ku Firewall -", {e})
+    except Exception as e:
+        print("chyba", e)
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except Exception as e:
+        print(e)
+        return False
+
 
 class Networking:
     def __init__(self):
@@ -31,6 +121,7 @@ class Networking:
         self._devices_lock = threading.Lock()
         self._self_address = socket.gethostbyname(socket.gethostname())
         self._discovering = False
+        self._nic = 0
 
         self._nick = None
 
@@ -55,11 +146,12 @@ class Networking:
         self.on_disconnect = lambda: None
         self.on_new_discovery = lambda devices: None
 
+        self.no_devices_found = lambda: None
+
         self._x_size = 7
         self._y_size = 6
         self._max_wins = 3
 
-        # toto potom treba zmenit na False; v realnom programe ked sa zapina discovery okno sa to nastavi na True a potom, ak sa z neho alebo z hry odide, tak sa nastavi na false
         self._tcp_recieving = False
 
         if os.path.exists(UUID_FILE):
@@ -69,6 +161,8 @@ class Networking:
             self._uuid = str(uuid.uuid4())
             with open(UUID_FILE, 'w') as f:
                 f.write(str(self._uuid))
+
+        _manage_firewall_rules()
 
     def get_uuid(self):
         print(self._uuid)
@@ -92,18 +186,11 @@ class Networking:
         return self._x_size, self._y_size, self._max_wins
 
     def start_discovery(self):
+        self._nic = 0
         self._discovering = True
         self._disc_thread = threading.Thread(target=self.discovery_loop)
         self._disc_thread.start()
-        """
-        self._send_thread = threading.Thread(target=self.send_discovery_loop)
-        self._recv_thread = threading.Thread(target=self.recv_discovery_loop)
-        self._del_old_dev_thread = threading.Thread(target=self.del_old_devices)
-        self._send_thread.start()
-        self._recv_thread.start()
-        self._del_old_dev_thread.start()
-        """
-        # print('zacate vyhladavanie')
+        print('zacate vyhladavanie')
 
     # toto treba osetrit, aby pri vypnuti programu sa vykonalo spolocne so stop_tcp_listen
     #
@@ -114,27 +201,20 @@ class Networking:
         if self._disc_thread is not None:
             while self._disc_thread.is_alive():
                 self._disc_thread.join(timeout=1)
-        """
-        if self._send_thread is not None:
-            self._send_thread.join()
-        if self._recv_thread is not None:
-            self._recv_thread.join()
-        if self._del_old_dev_thread is not None:
-            self._del_old_dev_thread.join()
-        """
-        # print("ukoncene vyhladavanie")
+        print("ukoncene sietovanie")
 
     def discovery_loop(self):
         while not self._stop_event.is_set():
-            filtered = False
             previous_send_recv = 0
             previous_del = 0
             recvs = {}
             send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+            send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
             for i in netifaces.interfaces():
                 if "Virtual" in i or "virtual" in i or "loop" in i or "Loop" in i or 2 not in netifaces.ifaddresses(i).keys():
-                    continue
+                    if i not in ['vpn', 'Vpn', 'VPN']:
+                        continue
                 print(i)
                 j = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 j.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -143,6 +223,7 @@ class Networking:
                 mreq = ip2bytes(MGROUP) + ip2bytes(netifaces.ifaddresses(i)[2][0]['addr'])  # tu musi byt presne zadana ipcka interfacu s inteom - bud ethernet alebo skor wifi
                 j.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
                 j.settimeout(1)
+                j.setblocking(False)
                 recvs[j] = netifaces.ifaddresses(i)[2][0]['addr']
 
             while self._discovering:
@@ -165,24 +246,30 @@ class Networking:
                     # si
                     # naposledy
                     # skoncil
-                    ready_socks = select.select(list(recvs.keys()), [], [], 2)[0]
+                    ready_socks = select.select(list(recvs.keys()), [], [], 1)[0]
                     if not ready_socks:
-                        pass
+                        self._nic += 1
                     else:
+                        self._nic = 0
                         try:
                             for recv in ready_socks:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
                                 if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
+                                    """
                                     for r in list(recvs.keys()):
                                         if r != recv:
                                             print('DEL', recvs[r])
                                             del recvs[r]
-                                    filtered = True
+                                    """
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
+                                            if self._devices[ip]['last_ping'] == message['timestamp']:
+                                                print("skipnuty rovnaky timestamp")
+                                                continue
                                             self._devices[ip]['last_ping'] = int(time.time())
+                                            print("zmeneny timestamp")
                                         else:
                                             self._devices[ip] = {
                                                 'nick': message['nick'],
@@ -190,11 +277,13 @@ class Networking:
                                                 'last_ping': int(time.time()),
                                             }
                                             self.on_new_discovery(self._devices)
+                                            print("pridane zar")
                                     print(f"sprava prijata: {message}")
                         except (socket.timeout, json.JSONDecodeError):
-                            print('com')
                             continue
-
+                if self._nic >= 6:
+                    # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
+                    self.no_devices_found()
                 if current_time - previous_del > 15:
                     previous_del = current_time
                     with self._devices_lock:
@@ -237,17 +326,20 @@ class Networking:
 
     def handle_message(self, recv):
         message = json.loads(recv.decode())
-        action = message['type']
-        if action == 'accept' and self._game_started is False:
-            self.handle_accept(message)
-        elif action == 'disconnect':
-            self.handle_disconnect()
-        elif action == 'move':
-            self.handle_move(message)
-        elif action == 'settings':
-            self.handle_settings(message)
+        if 'uuid' not in message.keys() or message['uuid'] == self._uuid:
+            pass
         else:
-            print("Invalid message type")
+            action = message['type']
+            if action == 'accept' and self._game_started is False:
+                self.handle_accept(message)
+            elif action == 'disconnect':
+                self.handle_disconnect()
+            elif action == 'move':
+                self.handle_move(message)
+            elif action == 'settings':
+                self.handle_settings(message)
+            else:
+                print("Invalid message type")
 
     def handle_accept(self, message):
         if message['confirm'] == 'confirm':
@@ -300,7 +392,7 @@ if __name__ == "__main__":
     net = Networking()
     try:
         net.get_uuid()
-        print(net.handle_message(b'{"type": "disconnect"}'))
+        # print(net.handle_message(b'{"type": "disconnect"}'))
         net.start_discovery()
         while True:
             time.sleep(1)
