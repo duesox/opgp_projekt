@@ -3,8 +3,8 @@ import unicodedata as ud
 import graphics as gr
 import pygame
 import sys
-import prepojenie
 
+from prepojenie import Networking
 from skore import Score
 
 
@@ -21,7 +21,7 @@ class LogikaHry:
     # Zoznam na ukladanie hodov
 
     def __init__(self, hrac):
-        self.net = prepojenie.Networking()
+        self.net = Networking()
         self.hrac = hrac
         self.gra = gr.Graphics(self.POCET_RIADKOV, self.POCET_STLPCOV)
         self.zoznam_policok = []
@@ -34,7 +34,21 @@ class LogikaHry:
                 self.zoznam_policok[i].append(self.PRAZDNO)
         self.running = True
         self.state = "main_menu"
-        self.start_discovery = self.net.start_tcp_listen()
+
+        # network callbacky
+        self.recv_move = self.net.on_move_recieved
+        self.recv_sett = self.net.on_settings_changed
+        self.recv_inv = self.net.on_game_invite
+        self.recv_inv_rej = self.net.on_game_invite_rejected
+        # start stop multiplayer hry
+        self.start_mult = self.net.on_connect
+        self.stop_mult = self.net.on_disconnect
+        # updatenuty list hracov
+        self.discovery_update = self.net.on_new_discovery
+        # dlho nedonajdeni hraci
+        self.no_players = self.net.no_devices_found
+
+        self.mult_color = 0
 
     # Metóda na vymazanie dát zo zoznamu
     def obnovHru(self):
@@ -90,7 +104,8 @@ class LogikaHry:
                 return row
         return None  # Ak nie je voľný riadok, vracia None.
 
-    def run(self):
+    # game type - 0 - offline, 1 - online
+    def run(self, game_type):
 
         """Spustí hlavný cyklus hry."""
         self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(),
@@ -246,6 +261,35 @@ class LogikaHry:
                         self.dosadenie_cervena()
                     else:
                         self.dosadenie_modra()
+
+    def discovery_update(self, devices):
+        pass
+
+    def recv_inv(self, nick, x_size, y_size, max_wins):
+        pass
+
+    def recv_inv_rej(self):
+        pass
+
+    def start_mult(self):
+        self.net.start_tcp_listen()
+
+    def stop_mult(self):
+        self.net.stop_tcp_listen()
+
+    def recv_move(self, x):
+        pass
+
+    def send_invite(self, uuid):
+        pass
+
+    # asi toto skipneme
+    def recv_sett(self):
+        pass
+
+
+
+
 
 
 if __name__ == "__main__":

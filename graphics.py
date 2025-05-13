@@ -154,8 +154,6 @@ class Graphics:
         pygame.display.update()
         return local_rect, online_rect
 
-    import pygame
-
     def show_network(self, lastOnlines, uuids, nicks=[]):
         self.screen.fill((30, 30, 30))
 
