@@ -7,6 +7,7 @@ import select
 import comtypes.client as cc
 from comtypes import COMError
 import ctypes
+import asyncio
 
 import json
 import socket
@@ -135,7 +136,7 @@ class Networking:
         self._stop_event = threading.Event()
 
         self._game_started = False
-
+        # callbacky
         self.on_move_recieved = lambda x: None
         self.on_settings_changed = lambda x_size, y_size, max_wins: None
 
@@ -162,7 +163,11 @@ class Networking:
 
         if os.path.exists(UUID_FILE):
             with open(UUID_FILE, 'r') as f:
-                self._uuid = str(f.readline().strip())
+                riadky = f.readline().strip().split()
+                self._uuid = str(riadky[0])
+                if len(riadky) == 2:
+                    self.nick = str(riadky[1])
+
         else:
             self._uuid = str(uuid.uuid4())
             with open(UUID_FILE, 'w') as f:
@@ -210,7 +215,7 @@ class Networking:
         print("ukoncene sietovanie")
 
     def discovery_loop(self):
-        while not self._stop_event.is_set():
+        with not self._stop_event.is_set():
             previous_send_recv = 0
             previous_del = 0
             recvs = {}
@@ -235,6 +240,7 @@ class Networking:
             while self._discovering:
                 current_time = time.time()
                 if current_time - previous_send_recv > 5:
+                    # posielanie hello do multicast group
                     previous_send_recv = current_time
                     sprava = json.dumps(
                         {
@@ -248,10 +254,7 @@ class Networking:
                     print('send -', sprava)
                     send.sendto(sprava, (MGROUP, MPORT))
                     # print(f"sprava poslana: {sprava}")
-                    # tu
-                    # si
-                    # naposledy
-                    # skoncil
+                    # prijimanie sprav z roznych socketov, ak tam nejake su
                     ready_socks = select.select(list(recvs.keys()), [], [], 1)[0]
                     if not ready_socks:
                         self._nic += 1
@@ -320,12 +323,17 @@ class Networking:
         if self._tcp_recv_thread is not None:
             self._tcp_recv_thread.join()
 
-    def connect_to_client(self, address, alr):
+    def connect_to_client(self, uuid_game, alr):
+        with self._devices_lock:
+            for ip, info in self._devices.items():
+                if info['uuid'] == uuid_game:
+                    address = ip
+                    break
         try:
             self._game_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._game_sock.connect((address, PORT))
             if alr == 0:
-                self.game_accept(address, 1)
+                self.game_accept(address, accept=1)
             self._game_started = True
             self.on_connect()
         except (socket.error, ConnectionRefusedError) as e:
@@ -357,7 +365,7 @@ class Networking:
         if message['confirm'] == 'confirm':
             self.on_game_invite(message['nick'], message['x_size'], message['y_size'], message['max_wins'])  # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
         elif message['confirm'] == 'confirmed':
-            self.connect_to_client(message['address'], 1)
+            self.connect_to_client(message['uuid'], 1)
         elif message['confirm'] == 'rejected':
             self.on_game_invite_rejected()
 
@@ -392,6 +400,11 @@ class Networking:
 
     # Poslanie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 poslat pozvanku, 1 potvrdzujem poznamku, 2 odmietnuta pozvanka
     def game_accept(self, target_address, x_size=7, y_size=6, max_wins=3, accept=0):
+        if '.' not in target_address:
+            for ip, info in self._devices.items():
+                if info['uuid'] == target_address:
+                    target_address = ip
+                    break
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as accept_sock:
             accept_sock.connect((target_address, PORT))
             if accept == 0:
@@ -406,6 +419,7 @@ class Networking:
                 self.set_game_settings(x_size, y_size, max_wins)
                 message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
             send_message(message, accept_sock)
+
 
     def send_move(self, x):
         message = {'app': 'connect43sa', 'type': 'move', 'uuid': self._uuid, 'x': x}

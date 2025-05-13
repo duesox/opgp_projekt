@@ -244,3 +244,6 @@ class Graphics:
         self.screen.blit(modry_text, (x_pos, y_pos_max+200))
         self.screen.blit(modry_skore, (x_pos, y_pos_max+250))
         pygame.display.update()
+
+    def player_list_update(self, devices):
+        pass
