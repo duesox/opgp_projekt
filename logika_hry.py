@@ -272,12 +272,15 @@ class LogikaHry:
         pass
 
     def start_mult(self):
-        pass
+        self.net.start_tcp_listen()
 
     def stop_mult(self):
-        pass
+        self.net.stop_tcp_listen()
 
     def recv_move(self, x):
+        pass
+
+    def send_invite(self, uuid):
         pass
 
     # asi toto skipneme

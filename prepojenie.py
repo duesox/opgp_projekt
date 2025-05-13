@@ -148,6 +148,12 @@ class Networking:
 
         self.no_devices_found = lambda: None
 
+        self.on_request_restart = lambda: None
+        self.on_game_restart = lambda: None
+
+        self.on_request_retry = lambda: None
+        self.on_game_retry = lambda: None
+
         self._x_size = 7
         self._y_size = 6
         self._max_wins = 3
@@ -340,6 +346,10 @@ class Networking:
                 self.handle_move(message)
             elif action == 'settings':
                 self.handle_settings(message)
+            elif action == 'restart':
+                self.handle_restart(message)
+            elif action == 'retry':
+                self.handle_retry(message)
             else:
                 print("Invalid message type")
 
@@ -367,6 +377,18 @@ class Networking:
         y_size = message['y_size']
         max_wins = message['max_wins']
         self.on_settings_changed(x_size, y_size, max_wins)
+
+    def handle_restart(self, message):
+        if message['restart'] == 'ask':
+            self.on_request_restart()
+        elif message['restart'] == 'yes':
+            self.on_game_restart()
+
+    def handle_retry(self, message):
+        if message['retry'] == 'ask':
+            self.on_request_retry()
+        elif message['retry'] == 'yes':
+            self.on_game_retry()
 
     # Poslanie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 poslat pozvanku, 1 potvrdzujem poznamku, 2 odmietnuta pozvanka
     def game_accept(self, target_address, x_size=7, y_size=6, max_wins=3, accept=0):
