@@ -276,11 +276,13 @@ class Networking:
                                                 'uuid': message['uuid'],
                                                 'last_ping': int(time.time()),
                                             }
+                                            # TODO toto potom treba presunut za except
                                             self.on_new_discovery(self._devices)
                                             print("pridane zar")
                                     print(f"sprava prijata: {message}")
                         except (socket.timeout, json.JSONDecodeError):
                             continue
+
                 if self._nic >= 6:
                     # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
                     self.no_devices_found()
