@@ -45,10 +45,12 @@ class Graphics:
                     (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),  # Y pozícia (riadok * veľkosť bunky + polovičná veľkosť).
                     self.RADIUS)  # Polomer pre vykreslenie žetónu.
         self.zobraz_skore(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny,skore)
+        self.draw_title(self.screen)
         pygame.display.update()
 
     def draw_board_no_update(self):
         pygame.draw.rect(self.screen, self.BG_COLOR, (250, 0, self.cols * self.CELL_SIZE, self.CELL_SIZE))
+        self.draw_title(self.screen)
 
         for row in range(self.rows):
             for col in range(self.cols):
@@ -67,7 +69,10 @@ class Graphics:
                 color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
 
                 # Vykreslenie žetónu
+
+
                 pygame.draw.circle(self.screen, color, (x, y), self.RADIUS)
+
 
     def clear_board(self,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
@@ -157,3 +162,39 @@ class Graphics:
         self.screen.blit(modry_text, (x_pos, y_pos_max+200))
         self.screen.blit(modry_skore, (x_pos, y_pos_max+250))
         pygame.display.update()
+
+    def draw_title(self, surface):
+        font = pygame.font.SysFont("arialblack", 70, bold=True)
+        text = "CONNECT 4"
+        spacing = 7  # bežné medzery medzi písmenami
+        reduced_spacing = 4  # menšia medzera medzi 'T' a '4'
+
+        # Predbežný výpočet šírky textu s rôznymi medzerami
+        total_width = 0
+        for i in range(len(text)):
+            total_width += font.size(text[i])[0]
+            if i < len(text) - 1:
+                total_width += reduced_spacing if text[i] == "T" and text[i + 1] == " " else spacing
+
+        x_start = (surface.get_width() - total_width) // 2
+        y_pos = 0
+        x_pos = x_start
+
+        for i in range(len(text)):
+            char = text[i]
+
+            # Tieň
+            shadow = font.render(char, True, (0, 0, 0))
+            surface.blit(shadow, (x_pos + 3, y_pos + 3))
+
+            # Zlatý text
+            letter = font.render(char, True, (255, 215, 0))
+            surface.blit(letter, (x_pos, y_pos))
+
+            # Posun pozície pre ďalšie písmeno
+            x_pos += font.size(char)[0]
+            if i < len(text) - 1:
+                if char == "T" and text[i + 1] == " ":
+                    x_pos += reduced_spacing
+                else:
+                    x_pos += spacing
