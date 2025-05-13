@@ -76,7 +76,8 @@ class LogikaHry :
             volny_riadok = self.prazdnyRiadok(stlpec)
 
             if volny_riadok is not None:
-                self.gra.animate_fall(stlpec, volny_riadok, self.hrac,self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+                self.gra.animate_fall(stlpec, volny_riadok, self.hrac,self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),
+                                      self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore(),self.hrac)
                 self.nastavHod(volny_riadok, stlpec, self.hrac)
                 self.hrac = 2 if self.hrac == 1 else 1
     def prazdnyRiadok(self, stlpec):
@@ -90,7 +91,8 @@ class LogikaHry :
 
     def run(self):
         """Spustí hlavný cyklus hry."""
-        self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+        self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),
+                            self.skore_cerveny.max_skore(),self.hrac)
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -123,14 +125,16 @@ class LogikaHry :
         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
         self.gra.winAnimation("cervena")
         self.obnovHru()
-        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),
+                             self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore(),self.hrac)
 
     def dosadenie_modra(self):
         self.VYHRA_MODRA += 1
         self.gra.winAnimation("modra")
         self.skore_modry.set_celkove_skore(self.pocet_kol)
         self.obnovHru()
-        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore())
+        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,self.skore_modry.get_celkove_skore(),
+                             self.skore_cerveny.get_celkove_skore(),self.skore_cerveny.max_skore(),self.hrac)
 
 
 
@@ -188,5 +192,5 @@ class LogikaHry :
 
 
 if __name__ == "__main__":
-    hra = LogikaHry(2)
+    hra = LogikaHry(1)
     hra.run()
