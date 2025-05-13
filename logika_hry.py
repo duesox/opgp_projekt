@@ -3,6 +3,7 @@ import unicodedata as ud
 import graphics as gr
 import pygame
 import sys
+import threading
 
 from prepojenie import Networking
 from skore import Score
@@ -35,6 +36,8 @@ class LogikaHry:
         self.running = True
         self.state = "main_menu"
 
+        self.players = dict()
+
         # network callbacky
         self.recv_move = self.net.on_move_recieved
         self.recv_sett = self.net.on_settings_changed
@@ -48,7 +51,16 @@ class LogikaHry:
         # dlho nedonajdeni hraci
         self.no_players = self.net.no_devices_found
 
-        self.mult_color = 0
+        self.restart_ask = self.net.on_request_restart
+        self.retry_ask = self.net.on_request_retry
+        self.restart_mult = self.net.on_game_restart
+        self.retry_mult = self.net.on_game_retry
+
+        self.mult_game = False
+        self.mult_color = 0 # 0 - cervena, 1 modra
+        self.player_color = 0
+
+        self.nickname = self.net.get_nickname()
 
     # Metóda na vymazanie dát zo zoznamu
     def obnovHru(self):
@@ -77,24 +89,35 @@ class LogikaHry:
             self.zoznam_policok[riadok][stlpec] = LogikaHry.MODRA
         self.vyhodnotHru()
 
-    def kliknutie(self, x_pozicia):
-        """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
+    def kliknutie(self, x_pozicia, protihrac=False):
+        if not self.mult_game or (self.mult_game and self.player_color == self.mult_color):
+            """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
 
-        # Určí šírku hracej plochy
-        sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
-        offset = 250  # Posun hracej plochy doprava o 250 px
+            # Určí šírku hracej plochy
+            sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+            offset = 250  # Posun hracej plochy doprava o 250 px
 
-        # Skontroluje, či kliknutie je v rámci hracej plochy
-        if offset <= x_pozicia <= offset + sirka_hracej_plochy:
-            stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+            # Skontroluje, či kliknutie je v rámci hracej plochy
+            if offset <= x_pozicia <= offset + sirka_hracej_plochy:
+                stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+                volny_riadok = self.prazdnyRiadok(stlpec)
+
+                if volny_riadok is not None:
+                    self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.VYHRA_MODRA, self.VYHRA_CERVENA,
+                                          self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
+                                          self.skore_cerveny.max_skore())
+                    self.nastavHod(volny_riadok, stlpec, self.hrac)
+                    self.hrac = 2 if self.hrac == 1 else 1
+        elif self.mult_game and not protihrac:
+            stlpec = x_pozicia
             volny_riadok = self.prazdnyRiadok(stlpec)
-
             if volny_riadok is not None:
                 self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.VYHRA_MODRA, self.VYHRA_CERVENA,
                                       self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
                                       self.skore_cerveny.max_skore())
                 self.nastavHod(volny_riadok, stlpec, self.hrac)
                 self.hrac = 2 if self.hrac == 1 else 1
+                self.net.send_move(stlpec)
 
     def prazdnyRiadok(self, stlpec):
         """Vráti prvý voľný riadok v danom stĺpci, alebo None ak je plný."""
@@ -105,7 +128,7 @@ class LogikaHry:
         return None  # Ak nie je voľný riadok, vracia None.
 
     # game type - 0 - offline, 1 - online
-    def run(self, game_type):
+    def run(self):
 
         """Spustí hlavný cyklus hry."""
         self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(),
@@ -263,13 +286,24 @@ class LogikaHry:
                         self.dosadenie_modra()
 
     def discovery_update(self, devices):
-        pass
+        self.players = devices
+        self.gra.player_list_update(devices)
 
     def recv_inv(self, nick, x_size, y_size, max_wins):
+        # zobrazit upozornenie a moznosti hej a ne
         pass
 
     def recv_inv_rej(self):
+        # zobrazit upozornenie, ze pozvanka bola odmietnuta
         pass
+
+    def inv_react(self, uuid, reaction: bool):
+        if reaction:
+            self.net.connect_to_client(uuid, 0)
+            self.player_color = 1
+        else:
+            self.net.game_accept(uuid, accept=2)
+
 
     def start_mult(self):
         self.net.start_tcp_listen()
@@ -278,10 +312,13 @@ class LogikaHry:
         self.net.stop_tcp_listen()
 
     def recv_move(self, x):
-        pass
+        # spracovanie a ukazanie tahu protihraca
+        self.kliknutie(x, True)
+        self.mult_color = 1 if self.hrac == 0 else 0
 
     def send_invite(self, uuid):
-        pass
+        self.net.game_accept(uuid)
+        self.player_color = 0
 
     # asi toto skipneme
     def recv_sett(self):

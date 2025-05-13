@@ -250,6 +250,9 @@ class Graphics:
         self.screen.blit(modry_skore, (x_pos, y_pos_max+250))
         pygame.display.update()
 
+    def player_list_update(self, devices):
+        pass
+      
     def draw_title(self, surface):
         font = pygame.font.SysFont("arialblack", 70, bold=True)
         text = "CONNECT 4"
