@@ -2,12 +2,17 @@ import pygame
 import random
 import sys
 
+
 class Graphics:
     CELL_SIZE = 100
     RADIUS = CELL_SIZE // 2 - 5
     BG_COLOR = (0, 0, 139)
     EMPTY_COLOR = (220, 220, 220)
     PLAYER_COLORS = [(0, 0, 255), (255, 0, 0)]
+
+
+    def set_empty_text(self, text):
+        self.empty_text = text
 
     NOTIF_DURATION = 3000  # milliseconds
     NOTIF_WIDTH = 300
@@ -28,7 +33,8 @@ class Graphics:
 
         self.screen = pygame.display.set_mode((width, height))  # Nastaví veľkosť okna na obrazovke.
         pygame.display.set_caption("Connect 4")  # Nastaví názov okna na "Connect 4".
-        self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]  # Inicializuje prázdnu dosku (všetky hodnoty 0).
+        self.board = [[0 for _ in range(self.cols)] for _ in
+                      range(self.rows)]  # Inicializuje prázdnu dosku (všetky hodnoty 0).
         self.running = True  # Premenná, ktorá kontroluje, či hra stále beží.
 
         self.WIDTH, self.HEIGHT = 950, 700
@@ -40,7 +46,11 @@ class Graphics:
         self.board = [[0 for _ in range(cols)] for _ in range(rows)]
         self.running = True
 
+
+        self.empty_text = ''
+
         self.notifications = []
+
 
     def draw_text_centered(self, text, y, size=40):
         font = pygame.font.SysFont("Arial", size)
@@ -49,7 +59,7 @@ class Graphics:
         self.screen.blit(txt, rect)
         return rect
 
-    def draw_board(self,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
+    def draw_board(self, vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore):
         self.screen.fill(self.BG_COLOR)
         for row in range(self.rows):
             for col in range(self.cols):
@@ -57,26 +67,40 @@ class Graphics:
                 pygame.draw.circle(self.screen, color, (
                     col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250,
                     (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),
-                    self.RADIUS)
+                                   self.RADIUS)
         leave_button = pygame.Rect(10, 10, 120, 50)
         pygame.draw.rect(self.screen, (255, 0, 0), leave_button)
         leave_txt = self.font.render("Leave", True, (255, 255, 255))
         self.screen.blit(leave_txt, (20, 15))
 
-        self.zobraz_skore(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny,skore)
+        self.zobraz_skore(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore)
         self.draw_title(self.screen)
+
+
+        # Súradnice obdĺžnika pozadia bunky
+        rect_x = col * self.CELL_SIZE + 250
+        rect_y = (row + 1) * self.CELL_SIZE
+
+        # Modré pozadie bunky
+        pygame.draw.rect(self.screen, self.BG_COLOR, (rect_x, rect_y, self.CELL_SIZE, self.CELL_SIZE))
+
+        # Zistenie farby žetónu
+        color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
+
+        # Vykreslenie žetónu
+        pygame.draw.circle(self.screen, color, (x, y), self.RADIUS)
 
         return leave_button
 
 
-    def clear_board(self,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
+    def clear_board(self, vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 
-        self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)
+        self.draw_board(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore)
 
-    def animate_fall(self, col, row, current_player,vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore):
+    def animate_fall(self, col, row, current_player, vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore):
         # X pozícia, kde bude žetón spadávať (stĺpec * veľkosť bunky + polovičná veľkosť).
-        x = col * self.CELL_SIZE + self.CELL_SIZE // 2 +250
+        x = col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250
         # Počiatočná Y pozícia (na začiatku nad doskou).
         y_start = self.CELL_SIZE // 2
         y_end = (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2
@@ -86,13 +110,14 @@ class Graphics:
             self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)
             pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
 
+
             self.draw_notifications(self.screen)
             pygame.display.flip()
             pygame.time.delay(10)  # Zastaví na 10 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
-        self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)  # Vykreslí dosku po páde žetónu.
+        self.draw_board(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore)  # Vykreslí dosku po páde žetónu.
 
     def winAnimation(self, vyherca):
         confetti_list = []
@@ -101,7 +126,8 @@ class Graphics:
                 "x": random.randint(0, self.WIDTH),
                 "y": random.randint(-100, -10),
                 "size": random.randint(4, 8),
-                "color": random.choice([(255, 0, 0), (0, 255, 0), (0, 100, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]),
+                "color": random.choice(
+                    [(255, 0, 0), (0, 255, 0), (0, 100, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]),
                 "speed": random.uniform(2, 5),
                 "angle": random.uniform(-0.1, 0.1)
             }
@@ -118,7 +144,6 @@ class Graphics:
                 c["y"] += c["speed"]
                 c["x"] += c["angle"]
                 pygame.draw.rect(self.screen, c["color"], (c["x"], c["y"], c["size"], c["size"]))
-
 
             if vyherca.lower() == "cervena":
                 text = self.font.render("Vyhral červený!", True, (255, 255, 255))
@@ -142,7 +167,7 @@ class Graphics:
         online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
         return local_rect, online_rect
 
-    def show_network(self, lastOnlines, uuids, nicks=[]):
+    def show_network(self, players):
         self.screen.fill((30, 30, 30))
 
         font_main = pygame.font.SysFont("Arial", 20)
@@ -162,32 +187,51 @@ class Graphics:
         leave_text = font_main.render("Leave", True, (255, 255, 255))
         self.screen.blit(leave_text, (leave_rect.x + 10, leave_rect.y + 5))
 
-        for i in range(len(uuids)):
-            nick = nicks[i] if i < len(nicks) else ""
-            uuid = uuids[i]
-            last = lastOnlines[i] + "s ago"
+        if len(players) > 0:
+            nicks = []
+            uuids = []
+            lastOnlines = []
 
-            y = start_y + i * (block_height + margin)
+            invite_rect = []
 
-            # Draw outer block
-            pygame.draw.rect(self.screen, (50, 50, 50), (block_x, y, block_width, block_height), border_radius=6)
+            empty_text = 'Vyhľadávam hráčov...'
 
-            # Draw "Nick", UUID, Last Online
-            nick_text = font_main.render(nick, True, (255, 255, 255))
-            uuid_text = font_small.render(uuid, True, (200, 200, 200))
-            last_text = font_main.render(last, True, (180, 180, 180))
+            for player in players:
+                nicks.append(player[0])
+                uuids.append(player[1])
+                lastOnlines.append(player[2])
 
-            self.screen.blit(nick_text, (block_x + 10, y + 5))
-            self.screen.blit(uuid_text, (block_x + 10, y + 30))
-            self.screen.blit(last_text, (block_x + block_width - last_text.get_width() - 10, y + 5))
+            for i in range(len(uuids)):
+                nick = nicks[i] if i < len(nicks) else ""
+                uuid = uuids[i]
+                last = lastOnlines[i] + "s ago"
 
-            # Draw "Invite" button
-            invite_rect = pygame.Rect(block_x + block_width // 2 - 40, y + 10, 80, 35)
-            pygame.draw.rect(self.screen, (100, 150, 250), invite_rect, border_radius=5)
-            invite_text = font_main.render("Invite", True, (0, 0, 0))
-            self.screen.blit(invite_text, (invite_rect.x + 10, invite_rect.y + 5))
+                y = start_y + i * (block_height + margin)
 
-        return leave_rect, invite_rect
+                # Draw outer block
+                pygame.draw.rect(self.screen, (50, 50, 50), (block_x, y, block_width, block_height), border_radius=6)
+
+                # Draw "Nick", UUID, Last Online
+                nick_text = font_main.render(nick, True, (255, 255, 255))
+                uuid_text = font_small.render(uuid, True, (200, 200, 200))
+                last_text = font_main.render(last, True, (180, 180, 180))
+
+                self.screen.blit(nick_text, (block_x + 10, y + 5))
+                self.screen.blit(uuid_text, (block_x + 10, y + 30))
+                self.screen.blit(last_text, (block_x + block_width - last_text.get_width() - 10, y + 5))
+
+                # Draw "Invite" button
+                invite_rect.append([pygame.Rect(block_x + block_width // 2 - 40, y + 10, 80, 35), uuids[i]])
+                pygame.draw.rect(self.screen, (100, 150, 250), invite_rect[i][0], border_radius=5)
+                invite_text = font_main.render("Invite", True, (0, 0, 0))
+                self.screen.blit(invite_text, (invite_rect[i][0].x + 10, invite_rect[i][0].y + 5))
+
+            pygame.display.update()
+            return leave_rect, invite_rect
+        else:
+            self.draw_text_centered('Vyhľadávam hráčov...', 20)
+            return leave_rect
+
 
     def show_about(self):
         self.screen.fill((30, 30, 30))
@@ -204,10 +248,7 @@ class Graphics:
             self.draw_text_centered(line, y, 30)
             y += 50
 
-
-
-
-    def zobraz_skore(self, vyhry_modry, vyhry_cerveny,skore_modry,skore_cerveny,skore_max):
+    def zobraz_skore(self, vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore_max):
         # Vymaže ľavú stranu (kde je skóre)
         pygame.draw.rect(self.screen, self.BG_COLOR, (0, 0, 200, self.HEIGHT))
 
@@ -215,20 +256,22 @@ class Graphics:
         x_pos = 20
         y_pos_max = self.CELL_SIZE
 
-        max_skore_text=self.small_font.render(f"Max skóre:", True, (255, 255, 255))
-        max_skore=self.small_font.render(f"{skore_max}", True, (255, 255, 255))
+        max_skore_text = self.small_font.render(f"Max skóre:", True, (255, 255, 255))
+        max_skore = self.small_font.render(f"{skore_max}", True, (255, 255, 255))
         cerveny_text = self.small_font.render(f"Červený: {vyhry_cerveny}", True, (255, 0, 0))
-        cerveny_skore= self.small_font.render(f"Skóre: {skore_cerveny}", True, (255, 0, 0))
+        cerveny_skore = self.small_font.render(f"Skóre: {skore_cerveny}", True, (255, 0, 0))
 
         modry_text = self.small_font.render(f"Modrý: {vyhry_modry}", True, (0, 0, 255))
-        modry_skore= self.small_font.render(f"Skóre: {skore_modry}", True, (0, 0, 255))
+        modry_skore = self.small_font.render(f"Skóre: {skore_modry}", True, (0, 0, 255))
 
         self.screen.blit(max_skore_text, (x_pos, y_pos_max))
+
         self.screen.blit(max_skore, (x_pos, y_pos_max+50))
         self.screen.blit(cerveny_text, (x_pos, y_pos_max+100))
         self.screen.blit(cerveny_skore, (x_pos, y_pos_max+150))
         self.screen.blit(modry_text, (x_pos, y_pos_max+200))
         self.screen.blit(modry_skore, (x_pos, y_pos_max+250))
+
 
     def player_list_update(self, devices):
         pass
