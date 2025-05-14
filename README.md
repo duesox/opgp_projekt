@@ -1,6 +1,6 @@
 
 # Connect 4 Game (Python)
-  Tento projekt je implementácia populárnej stolnej hry Connect 4 v Pythone pomocou knižnice pygame. Po spustení sa objaví menu, kde si hráč môže vybrať, či chce     hrať proti počítaču (singleplayer) alebo s druhým hráčom (multiplayer).
+  Tento projekt je implementácia populárnej stolnej hry Connect 4 v Pythone pomocou knižnice pygame. Po spustení sa objaví menu, kde si hráč môže vybrať, či chce hrať na 1 PC (offline) alebo cez sieť (online).
 
 ## Obsah
 ### Inštalácia
@@ -11,20 +11,20 @@
 ### Inštalácia
 
 ## Stiahnutie inštalačného súboru:
-  Stiahnite si inštalačný súbor, ktorý obsahuje všetky potrebné knižnice a súbory pre spustenie hry. Tento súbor je už pripravený na spustenie bez nutnosti           inštalácie ďalších závislostí.
+  Stiahnite si inštalačný súbor, ktorý obsahuje všetky potrebné knižnice a súbory pre spustenie hry. Tento súbor je už pripravený na spustenie bez nutnosti inštalácie ďalších závislostí.
   
 ## Spustenie inštalačného súboru:
-  Po stiahnutí súboru jednoducho dvakrát kliknite na inštalačný súbor (napríklad .exe na Windows) a postupujte podľa pokynov na obrazovke. Inštalátor automaticky     nainštaluje všetky potrebné závislosti a nakonfiguruje prostredie.
+  Po stiahnutí súboru jednoducho dvakrát kliknite na inštalačný súbor (napríklad .exe na Windows) a postupujte podľa pokynov na obrazovke. Inštalátor automaticky nainštaluje všetky potrebné závislosti a nakonfiguruje prostredie.
 ## Spustenie hry:
   Po nainštalovaní sa objaví ikona pre spustenie hry. Kliknutím na túto ikonu spustíte aplikáciu.
 ## Použitie
   Po spustení aplikácie sa zobrazí hlavné menu, kde hráč vyberie jeden z nasledujúcich režimov:
   
-  ### Singleplayer: Hráč hrá proti inému hráčovi na jednom počítači.
+  ### Offline: Dvaja hráči sa striedajú v hraní na jednom zariadení.
 
-  ### Multiplayer: Dvaja hráči sa môžu striedať v hraní na jednom zariadení.
+  ### Online: Dvaja hráči sa môžu striedať v hraní na 2 rôznych zariadeniach cez sieť.
 
-  Po výbere režimu sa zobrazí herná obrazovka, kde sa hráči striedajú v hádzaní žetónov do mriežky. Hráči používajú rôzne farby žetónov a cieľom je vytvoriť sériu    štyroch žetónov v rade.
+  Po výbere režimu sa zobrazí herná obrazovka, kde sa hráči striedajú v hádzaní žetónov do mriežky. Hráči používajú rôzne farby žetónov a cieľom je vytvoriť sériu štyroch žetónov v rade.
 
 ## Ovládanie:
   Kliknutím myšou na stĺpec umiestnite žetón do voľného riadku.
