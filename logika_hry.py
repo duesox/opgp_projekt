@@ -23,6 +23,7 @@ class LogikaHry:
 
     def __init__(self, hrac):
         self.net = Networking()
+        self.net_thread = threading.Thread(target=self.discovering)
         self.hrac = hrac
         self.gra = gr.Graphics(self.POCET_RIADKOV, self.POCET_STLPCOV)
         self.zoznam_policok = []
@@ -284,6 +285,9 @@ class LogikaHry:
                         self.dosadenie_cervena()
                     else:
                         self.dosadenie_modra()
+
+    def discovering(self):
+        self.net.start_discovery()
 
     def discovery_update(self, devices):
         self.players = []
