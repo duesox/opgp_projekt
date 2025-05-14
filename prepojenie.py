@@ -7,7 +7,6 @@ import select
 import comtypes.client as cc
 from comtypes import COMError
 import ctypes
-import asyncio
 
 import json
 import socket
@@ -28,6 +27,7 @@ def ip2bytes(addr):
 def send_message(message, sock):
     sock.send(json.dumps(message).encode())
 
+
 # nova firewall rule - vstup prot ID, port, dir: in - 1, out - 2
 def _create_firewall_rule(protocol, port, direction):
     print(protocol, port, direction)
@@ -46,6 +46,7 @@ def _create_firewall_rule(protocol, port, direction):
     rule.Enabled = 1
     rules.Add(rule)
     return rule.Name
+
 
 # kontrola, ci uz nejake firewall rules co chceme skontrolovat existuju, ak ano, vracia sa zoznam existujucich rules
 def _check_firewall_rules(rules_to_check):
@@ -66,6 +67,7 @@ def _check_firewall_rules(rules_to_check):
     except COMError as e:
         print("Check - chyba pri pristupe ku Firewall -", {e})
     return existing_rules
+
 
 # sprava celeho procesu vytvarania rules
 def _manage_firewall_rules():
@@ -107,6 +109,7 @@ def _manage_firewall_rules():
     except Exception as e:
         print("chyba", e)
 
+
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
@@ -147,7 +150,7 @@ class Networking:
         self.on_disconnect = lambda: None
         self.on_new_discovery = lambda devices: None
 
-        self.no_devices_found = lambda: None
+        self.no_devices_found = lambda cas: None
 
         self.on_request_restart = lambda: None
         self.on_game_restart = lambda: None
@@ -223,7 +226,8 @@ class Networking:
             send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
             send.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
             for i in netifaces.interfaces():
-                if "Virtual" in i or "virtual" in i or "loop" in i or "Loop" in i or 2 not in netifaces.ifaddresses(i).keys():
+                if "Virtual" in i or "virtual" in i or "loop" in i or "Loop" in i or 2 not in netifaces.ifaddresses(
+                        i).keys():
                     if i not in ['vpn', 'Vpn', 'VPN']:
                         continue
                 print(i)
@@ -231,11 +235,14 @@ class Networking:
                 j.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 j.bind(('', MPORT))
                 print(netifaces.ifaddresses(i)[2][0]['addr'])
-                mreq = ip2bytes(MGROUP) + ip2bytes(netifaces.ifaddresses(i)[2][0]['addr'])  # tu musi byt presne zadana ipcka interfacu s inteom - bud ethernet alebo skor wifi
+                mreq = ip2bytes(MGROUP) + ip2bytes(netifaces.ifaddresses(i)[2][0][
+                                                       'addr'])  # tu musi byt presne zadana ipcka interfacu s inteom - bud ethernet alebo skor wifi
                 j.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
                 j.settimeout(1)
                 j.setblocking(False)
                 recvs[j] = netifaces.ifaddresses(i)[2][0]['addr']
+
+            previous_device = time.time()
 
             while self._discovering:
                 current_time = time.time()
@@ -258,13 +265,15 @@ class Networking:
                     ready_socks = select.select(list(recvs.keys()), [], [], 1)[0]
                     if not ready_socks:
                         self._nic += 1
+
                     else:
                         self._nic = 0
                         try:
                             for recv in ready_socks:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
-                                if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
+                                if message["app"] == "connect43sa" and message["type"] == "discovery" and message[
+                                    'uuid'] != self._uuid:
                                     """
                                     for r in list(recvs.keys()):
                                         if r != recv:
@@ -289,12 +298,13 @@ class Networking:
                                             self.on_new_discovery(self._devices)
                                             print("pridane zar")
                                     print(f"sprava prijata: {message}")
+                                    previous_device = current_time
                         except (socket.timeout, json.JSONDecodeError):
                             continue
 
                 if self._nic >= 6:
                     # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
-                    self.no_devices_found()
+                    self.no_devices_found(current_time - previous_device)
                 if current_time - previous_del > 15:
                     previous_del = current_time
                     with self._devices_lock:
@@ -304,6 +314,8 @@ class Networking:
                             print(f'vymazana stara ip: {ip}')
                     print(self._devices)
                     self.on_new_discovery(self._devices)
+                    if len(self._devices) == 0:
+                        previous_device = current_time
                 time.sleep(5)
             send.close()
 
@@ -363,7 +375,8 @@ class Networking:
 
     def handle_accept(self, message):
         if message['confirm'] == 'confirm':
-            self.on_game_invite(message['nick'], message['x_size'], message['y_size'], message['max_wins'])  # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
+            self.on_game_invite(message['nick'], message['x_size'], message['y_size'],
+                                message['max_wins'])  # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
         elif message['confirm'] == 'confirmed':
             self.connect_to_client(message['uuid'], 1)
         elif message['confirm'] == 'rejected':
@@ -410,16 +423,18 @@ class Networking:
             if accept == 0:
                 confirm = 'confirm'
                 self.set_game_settings(x_size, y_size, max_wins)
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
+                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                           'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
             elif accept == 1:
                 confirm = 'confirmed'
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
+                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                           'confirm': confirm}
             else:
                 confirm = 'rejected'
                 self.set_game_settings(x_size, y_size, max_wins)
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address, 'confirm': confirm}
+                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                           'confirm': confirm}
             send_message(message, accept_sock)
-
 
     def send_move(self, x):
         message = {'app': 'connect43sa', 'type': 'move', 'uuid': self._uuid, 'x': x}

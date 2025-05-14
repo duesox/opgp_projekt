@@ -57,7 +57,7 @@ class LogikaHry:
         self.retry_mult = self.net.on_game_retry
 
         self.mult_game = False
-        self.mult_color = 0 # 0 - cervena, 1 modra
+        self.mult_color = 0  # 0 - cervena, 1 modra
         self.player_color = 0
 
         self.nickname = self.net.get_nickname()
@@ -143,8 +143,7 @@ class LogikaHry:
             elif self.state == "about":
                 self.gra.show_about()
             elif self.state == "discovery":
-                buttons = self.gra.show_network(['12'], ['5U3km@d1Ck'],
-                                                ['Profi Konektor 3+1'])  # len testovacie udaje - potom zmenit
+                buttons = self.gra.show_network(self.players)  # len testovacie udaje - potom zmenit
             elif self.state == "game":
                 leave_button = self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
                                                    self.skore_modry.get_celkove_skore(),
@@ -175,11 +174,12 @@ class LogikaHry:
                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
                         elif buttons[1].collidepoint(event.pos):
                             self.state = "discovery"
-                            self.gra.show_network(['12'], ['5U3km@d1Ck'],
-                                                  ['Profi Konektor 3+1'])  # len testovacie udaje - potom zmenit
+                            self.start_mult()
+                            self.gra.set_empty_text('Vyhľadávam hráčov...')
 
                     elif self.state == "discovery":
                         if buttons[0].collidepoint(event.pos):
+                            self.stop_mult()
                             self.state = "main_menu"
                         elif buttons[1].collidepoint(event.pos):  # TODO !!! Tu treba poslat invite !!!
                             self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
@@ -286,8 +286,10 @@ class LogikaHry:
                         self.dosadenie_modra()
 
     def discovery_update(self, devices):
-        self.players = devices
-        self.gra.player_list_update(devices)
+        self.players = []
+        for ip, info in devices:
+            self.players.append([info['nick'], info['uuid'], info['timestamp']])
+        self.gra.show_network(self.players)
 
     def recv_inv(self, nick, x_size, y_size, max_wins):
         # zobrazit upozornenie a moznosti hej a ne
@@ -304,12 +306,14 @@ class LogikaHry:
         else:
             self.net.game_accept(uuid, accept=2)
 
-
     def start_mult(self):
         self.net.start_tcp_listen()
 
     def stop_mult(self):
         self.net.stop_tcp_listen()
+
+    def no_players(self, time):
+        self.gra.set_empty_text(f'Už {time}s sa nenašli hráči.')
 
     def recv_move(self, x):
         # spracovanie a ukazanie tahu protihraca
@@ -323,10 +327,6 @@ class LogikaHry:
     # asi toto skipneme
     def recv_sett(self):
         pass
-
-
-
-
 
 
 if __name__ == "__main__":

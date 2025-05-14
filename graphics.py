@@ -9,6 +9,9 @@ class Graphics:
     EMPTY_COLOR = (220, 220, 220)
     PLAYER_COLORS = [(0, 0, 255), (255, 0, 0)]
 
+    def set_empty_text(self, text):
+        self.empty_text = text
+
     def __init__(self, rows, cols):
         pygame.init()  # Inicializuje Pygame knižnicu.
 
@@ -32,6 +35,8 @@ class Graphics:
         self.big_font = pygame.font.SysFont("Arial", 60, bold=True)
         self.board = [[0 for _ in range(cols)] for _ in range(rows)]
         self.running = True
+
+        self.empty_text = ''
 
     def draw_text_centered(self, text, y, size=40):
         font = pygame.font.SysFont("Arial", size)
@@ -134,7 +139,6 @@ class Graphics:
                 c["x"] += c["angle"]
                 pygame.draw.rect(self.screen, c["color"], (c["x"], c["y"], c["size"], c["size"]))
 
-
             if vyherca.lower() == "cervena":
                 text = self.font.render("Vyhral červený!", True, (255, 255, 255))
             else:
@@ -155,11 +159,11 @@ class Graphics:
     def show_play_menu(self):
         self.screen.fill((30, 30, 30))
         local_rect = self.draw_text_centered("On this device", 250)
-        online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
+        online_rect = self.draw_text_centered("Online (WIP)", 350)
         pygame.display.update()
         return local_rect, online_rect
 
-    def show_network(self, lastOnlines, uuids, nicks=[]):
+    def show_network(self, players):
         self.screen.fill((30, 30, 30))
 
         font_main = pygame.font.SysFont("Arial", 20)
@@ -179,33 +183,50 @@ class Graphics:
         leave_text = font_main.render("Leave", True, (255, 255, 255))
         self.screen.blit(leave_text, (leave_rect.x + 10, leave_rect.y + 5))
 
-        for i in range(len(uuids)):
-            nick = nicks[i] if i < len(nicks) else ""
-            uuid = uuids[i]
-            last = lastOnlines[i] + "s ago"
+        if len(players) > 0:
+            nicks = []
+            uuids = []
+            lastOnlines = []
 
-            y = start_y + i * (block_height + margin)
+            invite_rect = []
 
-            # Draw outer block
-            pygame.draw.rect(self.screen, (50, 50, 50), (block_x, y, block_width, block_height), border_radius=6)
+            empty_text = 'Vyhľadávam hráčov...'
 
-            # Draw "Nick", UUID, Last Online
-            nick_text = font_main.render(nick, True, (255, 255, 255))
-            uuid_text = font_small.render(uuid, True, (200, 200, 200))
-            last_text = font_main.render(last, True, (180, 180, 180))
+            for player in players:
+                nicks.append(player[0])
+                uuids.append(player[1])
+                lastOnlines.append(player[2])
 
-            self.screen.blit(nick_text, (block_x + 10, y + 5))
-            self.screen.blit(uuid_text, (block_x + 10, y + 30))
-            self.screen.blit(last_text, (block_x + block_width - last_text.get_width() - 10, y + 5))
+            for i in range(len(uuids)):
+                nick = nicks[i] if i < len(nicks) else ""
+                uuid = uuids[i]
+                last = lastOnlines[i] + "s ago"
 
-            # Draw "Invite" button
-            invite_rect = pygame.Rect(block_x + block_width // 2 - 40, y + 10, 80, 35)
-            pygame.draw.rect(self.screen, (100, 150, 250), invite_rect, border_radius=5)
-            invite_text = font_main.render("Invite", True, (0, 0, 0))
-            self.screen.blit(invite_text, (invite_rect.x + 10, invite_rect.y + 5))
+                y = start_y + i * (block_height + margin)
 
-        pygame.display.update()
-        return leave_rect, invite_rect
+                # Draw outer block
+                pygame.draw.rect(self.screen, (50, 50, 50), (block_x, y, block_width, block_height), border_radius=6)
+
+                # Draw "Nick", UUID, Last Online
+                nick_text = font_main.render(nick, True, (255, 255, 255))
+                uuid_text = font_small.render(uuid, True, (200, 200, 200))
+                last_text = font_main.render(last, True, (180, 180, 180))
+
+                self.screen.blit(nick_text, (block_x + 10, y + 5))
+                self.screen.blit(uuid_text, (block_x + 10, y + 30))
+                self.screen.blit(last_text, (block_x + block_width - last_text.get_width() - 10, y + 5))
+
+                # Draw "Invite" button
+                invite_rect.append([pygame.Rect(block_x + block_width // 2 - 40, y + 10, 80, 35), uuids[i]])
+                pygame.draw.rect(self.screen, (100, 150, 250), invite_rect[i][0], border_radius=5)
+                invite_text = font_main.render("Invite", True, (0, 0, 0))
+                self.screen.blit(invite_text, (invite_rect[i][0].x + 10, invite_rect[i][0].y + 5))
+
+            pygame.display.update()
+            return leave_rect, invite_rect
+        else:
+            self.draw_text_centered('Vyhľadávam hráčov...', 20)
+            return leave_rect
 
     def show_about(self):
         self.screen.fill((30, 30, 30))
@@ -252,7 +273,7 @@ class Graphics:
 
     def player_list_update(self, devices):
         pass
-      
+
     def draw_title(self, surface):
         font = pygame.font.SysFont("arialblack", 70, bold=True)
         text = "CONNECT 4"
