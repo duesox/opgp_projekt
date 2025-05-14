@@ -1,6 +1,6 @@
 
 # Connect 4 Game (Python)
-  Tento projekt je implementácia populárnej stolnej hry Connect 4 v Pythone pomocou knižnice pygame. Po spustení sa objaví menu, kde si hráč môže vybrať, či chce hrať na 1 PC (offline) alebo cez sieť (online).
+  Tento projekt je implementácia populárnej stolnej hry Connect 4 v Pythone pomocou knižnice pygame. Po spustení sa objaví menu, kde si hráč môže vybrať, či chce hrať na 1 PC (offline) alebo cez LAN sieť (online).
 
 ## Obsah
 ### Inštalácia
@@ -22,7 +22,7 @@
   
   ### Offline: Dvaja hráči sa striedajú v hraní na jednom zariadení.
 
-  ### Online: Dvaja hráči sa môžu striedať v hraní na 2 rôznych zariadeniach cez sieť.
+  ### Online: Dvaja hráči sa môžu striedať v hraní na 2 rôznych zariadeniach cez LAN sieť.
 
   Po výbere režimu sa zobrazí herná obrazovka, kde sa hráči striedajú v hádzaní žetónov do mriežky. Hráči používajú rôzne farby žetónov a cieľom je vytvoriť sériu štyroch žetónov v rade.
 
