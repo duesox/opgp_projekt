@@ -10,14 +10,22 @@ class Graphics:
     EMPTY_COLOR = (220, 220, 220)
     PLAYER_COLORS = [(0, 0, 255), (255, 0, 0)]
 
+
     def set_empty_text(self, text):
         self.empty_text = text
+
+    NOTIF_DURATION = 3000  # milliseconds
+    NOTIF_WIDTH = 300
+    NOTIF_HEIGHT = 50
+    MARGIN = 10
+
 
     def __init__(self, rows, cols):
         pygame.init()  # Inicializuje Pygame knižnicu.
 
         self.font = pygame.font.SysFont("Arial", 80, bold=True)
         self.small_font = pygame.font.SysFont("Arial", 50, bold=True)
+        self.not_font = pygame.font.SysFont("Arial", 20)
         self.rows = rows  # Nastaví počet riadkov na doske.
         self.cols = cols  # Nastaví počet stĺpcov na doske.
         width = cols * self.CELL_SIZE  # Šírka obrazovky (šírka všetkých stĺpcov).
@@ -38,7 +46,11 @@ class Graphics:
         self.board = [[0 for _ in range(cols)] for _ in range(rows)]
         self.running = True
 
+
         self.empty_text = ''
+
+        self.notifications = []
+
 
     def draw_text_centered(self, text, y, size=40):
         font = pygame.font.SysFont("Arial", size)
@@ -63,31 +75,23 @@ class Graphics:
 
         self.zobraz_skore(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore)
         self.draw_title(self.screen)
-        pygame.display.update()
+
+
+        # Súradnice obdĺžnika pozadia bunky
+        rect_x = col * self.CELL_SIZE + 250
+        rect_y = (row + 1) * self.CELL_SIZE
+
+        # Modré pozadie bunky
+        pygame.draw.rect(self.screen, self.BG_COLOR, (rect_x, rect_y, self.CELL_SIZE, self.CELL_SIZE))
+
+        # Zistenie farby žetónu
+        color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
+
+        # Vykreslenie žetónu
+        pygame.draw.circle(self.screen, color, (x, y), self.RADIUS)
+
         return leave_button
 
-    def draw_board_no_update(self):
-        pygame.draw.rect(self.screen, self.BG_COLOR, (250, 0, self.cols * self.CELL_SIZE, self.CELL_SIZE))
-        self.draw_title(self.screen)
-
-        for row in range(self.rows):
-            for col in range(self.cols):
-                # Súradnice stredu bunky
-                x = col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250
-                y = (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2
-
-                # Súradnice obdĺžnika pozadia bunky
-                rect_x = col * self.CELL_SIZE + 250
-                rect_y = (row + 1) * self.CELL_SIZE
-
-                # Modré pozadie bunky
-                pygame.draw.rect(self.screen, self.BG_COLOR, (rect_x, rect_y, self.CELL_SIZE, self.CELL_SIZE))
-
-                # Zistenie farby žetónu
-                color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
-
-                # Vykreslenie žetónu
-                pygame.draw.circle(self.screen, color, (x, y), self.RADIUS)
 
     def clear_board(self, vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
@@ -103,11 +107,12 @@ class Graphics:
 
         # Animácia pádu (posúvanie žetónu po Y osi).
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
-            self.draw_board_no_update()
-            pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y),
-                               self.RADIUS)  # Vykreslí žetón na novej pozícii.
+            self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)
+            pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
 
-            pygame.display.update()  # Aktualizuje obrazovku.
+
+            self.draw_notifications(self.screen)
+            pygame.display.flip()
             pygame.time.delay(10)  # Zastaví na 10 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
@@ -154,14 +159,12 @@ class Graphics:
         play_rect = self.draw_text_centered("Play", 200)
         about_rect = self.draw_text_centered("About", 300)
         exit_rect = self.draw_text_centered("Exit", 400)
-        pygame.display.update()
         return play_rect, about_rect, exit_rect
 
     def show_play_menu(self):
         self.screen.fill((30, 30, 30))
         local_rect = self.draw_text_centered("On this device", 250)
-        online_rect = self.draw_text_centered("Online (WIP)", 350)
-        pygame.display.update()
+        online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
         return local_rect, online_rect
 
     def show_network(self, players):
@@ -229,6 +232,7 @@ class Graphics:
             self.draw_text_centered('Vyhľadávam hráčov...', 20)
             return leave_rect
 
+
     def show_about(self):
         self.screen.fill((30, 30, 30))
         lines = [
@@ -243,7 +247,6 @@ class Graphics:
         for line in lines:
             self.draw_text_centered(line, y, 30)
             y += 50
-        pygame.display.update()
 
     def zobraz_skore(self, vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore_max):
         # Vymaže ľavú stranu (kde je skóre)
@@ -262,12 +265,13 @@ class Graphics:
         modry_skore = self.small_font.render(f"Skóre: {skore_modry}", True, (0, 0, 255))
 
         self.screen.blit(max_skore_text, (x_pos, y_pos_max))
-        self.screen.blit(max_skore, (x_pos, y_pos_max + 50))
-        self.screen.blit(cerveny_text, (x_pos, y_pos_max + 100))
-        self.screen.blit(cerveny_skore, (x_pos, y_pos_max + 150))
-        self.screen.blit(modry_text, (x_pos, y_pos_max + 200))
-        self.screen.blit(modry_skore, (x_pos, y_pos_max + 250))
-        pygame.display.update()
+
+        self.screen.blit(max_skore, (x_pos, y_pos_max+50))
+        self.screen.blit(cerveny_text, (x_pos, y_pos_max+100))
+        self.screen.blit(cerveny_skore, (x_pos, y_pos_max+150))
+        self.screen.blit(modry_text, (x_pos, y_pos_max+200))
+        self.screen.blit(modry_skore, (x_pos, y_pos_max+250))
+
 
     def player_list_update(self, devices):
         pass
@@ -307,3 +311,26 @@ class Graphics:
                     x_pos += reduced_spacing
                 else:
                     x_pos += spacing
+    def show_notification(self, message):
+        self.notifications.append({"text": message, "start_time": pygame.time.get_ticks()})
+
+    def draw_notifications(self, surface):
+        now = pygame.time.get_ticks()
+        for i, notif in enumerate(self.notifications[:]):
+            elapsed = now - notif["start_time"]
+            if elapsed > self.NOTIF_DURATION:
+                self.notifications.remove(notif)
+                continue
+
+            # Position (bottom right corner)
+            x = surface.get_width() - self.NOTIF_WIDTH - self.MARGIN
+            y = surface.get_height() - (self.NOTIF_HEIGHT + self.MARGIN) * (i + 1)
+
+            # Draw background
+            notif_rect = pygame.Rect(x, y, self.NOTIF_WIDTH, self.NOTIF_HEIGHT)
+            pygame.draw.rect(surface, (30, 30, 30), notif_rect, border_radius=8)
+            pygame.draw.rect(surface, (200, 200, 200), notif_rect, 2, border_radius=8)
+
+            # Render text
+            text_surf = self.not_font.render(notif["text"], True, (255, 255, 255))
+            surface.blit(text_surf, (x + 10, y + 10))

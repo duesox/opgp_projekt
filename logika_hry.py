@@ -62,6 +62,7 @@ class LogikaHry:
         self.player_color = 0
 
         self.nickname = self.net.get_nickname()
+        self.clock = pygame.time.Clock()
 
     # Metóda na vymazanie dát zo zoznamu
     def obnovHru(self):
@@ -137,6 +138,7 @@ class LogikaHry:
 
         while self.running:
             self.gra.clock.tick(60)
+            self.clock.tick(60)
             if self.state == "main_menu":
                 buttons = self.gra.show_main_menu()
             elif self.state == "play_menu":
@@ -163,6 +165,8 @@ class LogikaHry:
                             self.state = "about"
                         elif buttons[2].collidepoint(event.pos):
                             self.running = False
+                        else:
+                            self.gra.show_notification("Netrafil si tlačidlo, skus ešte raz")
 
                     elif self.state == "play_menu":
                         if buttons[0].collidepoint(event.pos):
@@ -200,6 +204,10 @@ class LogikaHry:
                             self.state = "main_menu"
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             self.kliknutie(event.pos[0])
+
+            self.gra.draw_notifications(self.gra.screen)
+            pygame.display.flip()
+
 
         pygame.quit()
         sys.exit()
