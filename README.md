@@ -1,23 +1,23 @@
 
-#Connect 4 Game (Python)
+# Connect 4 Game (Python)
   Tento projekt je implementácia populárnej stolnej hry Connect 4 v Pythone pomocou knižnice pygame. Po spustení sa objaví menu, kde si hráč môže vybrať, či chce     hrať proti počítaču (singleplayer) alebo s druhým hráčom (multiplayer).
 
-##Obsah
-###Inštalácia
-###Použitie
-###Opis projektu
-###Prispievanie
-###Licencia
-###Inštalácia
+## Obsah
+### Inštalácia
+### Použitie
+### Opis projektu
+### Prispievanie
+### Licencia
+### Inštalácia
 
-##Stiahnutie inštalačného súboru:
+## Stiahnutie inštalačného súboru:
   Stiahnite si inštalačný súbor, ktorý obsahuje všetky potrebné knižnice a súbory pre spustenie hry. Tento súbor je už pripravený na spustenie bez nutnosti           inštalácie ďalších závislostí.
   
-##Spustenie inštalačného súboru:
+## Spustenie inštalačného súboru:
   Po stiahnutí súboru jednoducho dvakrát kliknite na inštalačný súbor (napríklad .exe na Windows) a postupujte podľa pokynov na obrazovke. Inštalátor automaticky     nainštaluje všetky potrebné závislosti a nakonfiguruje prostredie.
-##Spustenie hry:
+## Spustenie hry:
   Po nainštalovaní sa objaví ikona pre spustenie hry. Kliknutím na túto ikonu spustíte aplikáciu.
-##Použitie
+## Použitie
   Po spustení aplikácie sa zobrazí hlavné menu, kde hráč vyberie jeden z nasledujúcich režimov:
   
   ###Singleplayer: Hráč hrá proti inému hráčovi na jednom počítači.
@@ -26,29 +26,29 @@
 
   Po výbere režimu sa zobrazí herná obrazovka, kde sa hráči striedajú v hádzaní žetónov do mriežky. Hráči používajú rôzne farby žetónov a cieľom je vytvoriť sériu    štyroch žetónov v rade.
 
-##Ovládanie:
+## Ovládanie:
   Kliknutím myšou na stĺpec umiestnite žetón do voľného riadku.
   Po každom ťahu sa kontroluje, či niektorý hráč nevyhral.
   Hra pokračuje, kým niekto nevyhrá alebo nedôjde k remíze.
-##Opis projektu
+## Opis projektu
   Tento projekt implementuje hru Connect 4 v Pythone pomocou knižnice pygame. Hra obsahuje:
-###Menu na výber režimu hry: 
+### Menu na výber režimu hry: 
   Po spustení sa zobrazí menu, kde si hráči vyberú, či chcú hrať proti počítaču alebo proti druhému hráčovi.
 
-###Logika hry: 
+### Logika hry: 
   Hra hodnotí ťahy, vyhodnocuje víťaza a kontroluje remízu.
 
 
-###Hlavné funkcie:
+### Hlavné funkcie:
   Herná doska je vizualizovaná pomocou pygame.
 
-###Animácie: 
+### Animácie: 
   Žetóny padajú do stĺpcov a po výhre sa spustí animácia oslavy.
 
-###Skóre: 
+### Skóre: 
   Zobrazuje skóre pre oboch hráčov.
 
-###Prispievanie
+### Prispievanie
   Ak chcete prispieť k tomuto projektu, môžete:
   Vytvoriť issue pre návrhy na vylepšenie alebo hlásenie chýb.
   Poslať pull request s vašimi zmenami.
