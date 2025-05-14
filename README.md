@@ -20,9 +20,9 @@
 ## Použitie
   Po spustení aplikácie sa zobrazí hlavné menu, kde hráč vyberie jeden z nasledujúcich režimov:
   
-  ###Singleplayer: Hráč hrá proti inému hráčovi na jednom počítači.
+  ### Singleplayer: Hráč hrá proti inému hráčovi na jednom počítači.
 
-  ###Multiplayer: Dvaja hráči sa môžu striedať v hraní na jednom zariadení.
+  ### Multiplayer: Dvaja hráči sa môžu striedať v hraní na jednom zariadení.
 
   Po výbere režimu sa zobrazí herná obrazovka, kde sa hráči striedajú v hádzaní žetónov do mriežky. Hráči používajú rôzne farby žetónov a cieľom je vytvoriť sériu    štyroch žetónov v rade.
 
