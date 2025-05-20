@@ -1,6 +1,5 @@
 import pygame
 import random
-import sys
 
 
 class Graphics:
@@ -10,7 +9,6 @@ class Graphics:
     EMPTY_COLOR = (220, 220, 220)
     PLAYER_COLORS = [(0, 0, 255), (255, 0, 0)]
 
-
     def set_empty_text(self, text):
         self.empty_text = text
 
@@ -18,7 +16,6 @@ class Graphics:
     NOTIF_WIDTH = 300
     NOTIF_HEIGHT = 50
     MARGIN = 10
-
 
     def __init__(self, rows, cols):
         pygame.init()  # Inicializuje Pygame knižnicu.
@@ -46,11 +43,9 @@ class Graphics:
         self.board = [[0 for _ in range(cols)] for _ in range(rows)]
         self.running = True
 
-
         self.empty_text = ''
 
         self.notifications = []
-
 
     def draw_text_centered(self, text, y, size=40):
         font = pygame.font.SysFont("Arial", size)
@@ -76,22 +71,18 @@ class Graphics:
         self.zobraz_skore(vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore)
         self.draw_title(self.screen)
 
-
         # Súradnice obdĺžnika pozadia bunky
         rect_x = col * self.CELL_SIZE + 250
         rect_y = (row + 1) * self.CELL_SIZE
 
-        # Modré pozadie bunky
-        pygame.draw.rect(self.screen, self.BG_COLOR, (rect_x, rect_y, self.CELL_SIZE, self.CELL_SIZE))
 
         # Zistenie farby žetónu
         color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
 
         # Vykreslenie žetónu
-        pygame.draw.circle(self.screen, color, (x, y), self.RADIUS)
+        # pygame.draw.circle(self.screen, color, (x, y), self.RADIUS)
 
         return leave_button
-
 
     def clear_board(self, vyhry_modry, vyhry_cerveny, skore_modry, skore_cerveny, skore):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
@@ -109,7 +100,6 @@ class Graphics:
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
             self.draw_board(vyhry_modry,vyhry_cerveny,skore_modry,skore_cerveny,skore)
             pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
-
 
             self.draw_notifications(self.screen)
             pygame.display.flip()
@@ -227,11 +217,10 @@ class Graphics:
                 self.screen.blit(invite_text, (invite_rect[i][0].x + 10, invite_rect[i][0].y + 5))
 
             pygame.display.update()
-            return leave_rect, invite_rect
+            return [leave_rect] + invite_rect
         else:
             self.draw_text_centered('Vyhľadávam hráčov...', 20)
-            return leave_rect
-
+            return [leave_rect]
 
     def show_about(self):
         self.screen.fill((30, 30, 30))
@@ -272,7 +261,6 @@ class Graphics:
         self.screen.blit(modry_text, (x_pos, y_pos_max+200))
         self.screen.blit(modry_skore, (x_pos, y_pos_max+250))
 
-
     def player_list_update(self, devices):
         pass
 
@@ -311,6 +299,7 @@ class Graphics:
                     x_pos += reduced_spacing
                 else:
                     x_pos += spacing
+
     def show_notification(self, message):
         self.notifications.append({"text": message, "start_time": pygame.time.get_ticks()})
 

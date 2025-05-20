@@ -186,14 +186,14 @@ class LogikaHry:
                         if buttons[0].collidepoint(event.pos):
                             self.stop_mult()
                             self.state = "main_menu"
-                        elif buttons[1].collidepoint(event.pos):  # TODO !!! Tu treba poslat invite !!!
-                            self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                                 self.skore_modry.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
-                            self.state = "game"
-                            self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                                self.skore_modry.get_celkove_skore(),
-                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                        else:
+                            # Kontrola kliknutí na invite tlačidlá (index 1 a vyššie)
+                            for button in buttons[1:]:
+                                if button[0].collidepoint(event.pos):  # button[0] je Rect objekt tlačidla
+                                    player_uuid = button[1]  # button[1] je UUID hráča
+                                    print(f"Sending invite to player with UUID: {player_uuid}")
+                                    # Tu môžete implementovať odoslanie pozvánky danému hráčovi
+                                    self.send_invite(player_uuid)
 
                     elif self.state == "about":
                         self.state = "main_menu"
