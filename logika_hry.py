@@ -158,6 +158,8 @@ class LogikaHry:
                     self.running = False
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.gra.handle_notif_clicks(event.pos):
+                        continue
                     if self.state == "main_menu":
                         if buttons[0].collidepoint(event.pos):
                             self.state = "play_menu"
@@ -303,13 +305,13 @@ class LogikaHry:
             self.players.append([info['nick'], info['uuid'], info['timestamp']])
         self.gra.show_network(self.players)
 
-    def recv_inv(self, nick, x_size, y_size, max_wins):
+    def recv_inv(self, nick, uuid):  # mozno tu este max_wins
         # zobrazit upozornenie a moznosti hej a ne
-        pass
+        self.gra.receive_invite(nick, uuid)
 
     def recv_inv_rej(self):
         # zobrazit upozornenie, ze pozvanka bola odmietnuta
-        pass
+        self.gra.show_notification("Pozvánka bola odmietnutá.")
 
     def inv_react(self, uuid, reaction: bool):
         if reaction:
