@@ -59,7 +59,7 @@ class Graphics:
         self.screen.blit(txt, rect)
         return rect
 
-    def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore):
+    def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player):
         self.screen.fill(self.BG_COLOR)
 
         # Najprv zobraz skóre
@@ -76,6 +76,8 @@ class Graphics:
 
         # Potom nakresli názov
         self.draw_title(self.screen)
+        self.current_player(current_player)
+
 
 
         leave_button = pygame.Rect(50, 610, 80, 80)
@@ -90,10 +92,10 @@ class Graphics:
         return leave_button
 
 
-    def clear_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore):
+    def clear_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 
-        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore)
+        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player)
 
     def animate_fall(self, col, row, current_player, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore):
         # X pozícia, kde bude žetón spadávať (stĺpec * veľkosť bunky + polovičná veľkosť).
@@ -104,7 +106,7 @@ class Graphics:
 
         # Animácia pádu (posúvanie žetónu po Y osi).
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
-            self.draw_board(vyhry_zlty,vyhry_cerveny,skore_zlty,skore_cerveny,skore)
+            self.draw_board(vyhry_zlty,vyhry_cerveny,skore_zlty,skore_cerveny,skore, current_player)
             pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
 
 
@@ -114,7 +116,17 @@ class Graphics:
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
-        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore)  # Vykreslí dosku po páde žetónu.
+        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player)  # Vykreslí dosku po páde žetónu.
+
+
+    def current_player(self,player):
+        x = 90  # left + half width
+        y = 90
+        pygame.draw.circle(self.screen, self.PLAYER_COLORS[player - 1], (x, y), self.RADIUS)
+
+
+
+
 
     def winAnimation(self, vyherca):
         confetti_list = []
@@ -251,7 +263,7 @@ class Graphics:
 
         # Pozície pre text naľavo
         x_pos = 20
-        y_pos_max = self.CELL_SIZE
+        y_pos_max = 140
 
         max_skore_text = self.small_font.render(f"Max skóre:", True, (255, 255, 255))
         max_skore = self.small_font.render(f"{skore_max}", True, (255, 255, 255))
@@ -264,10 +276,10 @@ class Graphics:
         self.screen.blit(max_skore_text, (x_pos, y_pos_max))
 
         self.screen.blit(max_skore, (x_pos, y_pos_max+50))
-        self.screen.blit(cerveny_text, (x_pos, y_pos_max+100))
-        self.screen.blit(cerveny_skore, (x_pos, y_pos_max+150))
-        self.screen.blit(zlty_text, (x_pos, y_pos_max+200))
-        self.screen.blit(zlty_skore, (x_pos, y_pos_max+250))
+        self.screen.blit(cerveny_text, (x_pos, y_pos_max+120))
+        self.screen.blit(cerveny_skore, (x_pos, y_pos_max+170))
+        self.screen.blit(zlty_text, (x_pos, y_pos_max+240))
+        self.screen.blit(zlty_skore, (x_pos, y_pos_max+290))
 
 
     def player_list_update(self, devices):
