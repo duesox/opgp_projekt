@@ -12,23 +12,23 @@ from skore import Score
 class LogikaHry:
     # Konštanty
     CERVENA = 2
-    MODRA = 1
+    ZLTA = 1
     PRAZDNO = 0
-    VYHRA_CERVENA = 0
-    VYHRA_MODRA = 0
     POCET_RIADKOV = 6
     POCET_STLPCOV = 7
 
     # Zoznam na ukladanie hodov
 
     def __init__(self, hrac):
+        self.vyhra_cervena = 0
+        self.vyhra_zlta = 0
         self.net = Networking()
         self.net_thread = threading.Thread(target=self.discovering)
         self.hrac = hrac
         self.gra = gr.Graphics(self.POCET_RIADKOV, self.POCET_STLPCOV)
         self.zoznam_policok = []
         self.pocet_kol = 0
-        self.skore_modry = Score(self.POCET_RIADKOV, self.POCET_STLPCOV)
+        self.skore_zlty = Score(self.POCET_RIADKOV, self.POCET_STLPCOV)
         self.skore_cerveny = Score(self.POCET_RIADKOV, self.POCET_STLPCOV)
         for i in range(self.POCET_RIADKOV):
             self.zoznam_policok.append([])
@@ -58,7 +58,7 @@ class LogikaHry:
         self.retry_mult = self.net.on_game_retry
 
         self.mult_game = False
-        self.mult_color = 0  # 0 - cervena, 1 modra
+        self.mult_color = 0  # 0 - cervena, 1 zlta
         self.player_color = 0
 
         self.nickname = self.net.get_nickname()
@@ -79,16 +79,16 @@ class LogikaHry:
             self.zoznam_policok.append([])
             for j in range(self.POCET_STLPCOV):
                 self.zoznam_policok[i].append(self.PRAZDNO)
-        self.VYHRA_CERVENA = 0
-        self.VYHRA_MODRA = 0
+        self.vyhra_cervena = 0
+        self.vyhra_zlta = 0
 
     # Nastavenie hodu na správne miesto a priradenie správnej farby
     def nastavHod(self, riadok, stlpec, farba):
         self.pocet_kol += 1
         if farba == LogikaHry.CERVENA:
             self.zoznam_policok[riadok][stlpec] = LogikaHry.CERVENA
-        elif farba == LogikaHry.MODRA:
-            self.zoznam_policok[riadok][stlpec] = LogikaHry.MODRA
+        elif farba == LogikaHry.ZLTA:
+            self.zoznam_policok[riadok][stlpec] = LogikaHry.ZLTA
         self.vyhodnotHru()
 
     def kliknutie(self, x_pozicia, protihrac=False):
@@ -105,8 +105,8 @@ class LogikaHry:
                 volny_riadok = self.prazdnyRiadok(stlpec)
 
                 if volny_riadok is not None:
-                    self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                          self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
+                    self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
+                                          self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
                                           self.skore_cerveny.max_skore())
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 2 if self.hrac == 1 else 1
@@ -114,8 +114,8 @@ class LogikaHry:
             stlpec = x_pozicia
             volny_riadok = self.prazdnyRiadok(stlpec)
             if volny_riadok is not None:
-                self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                      self.skore_modry.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
+                self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
+                                      self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
                                       self.skore_cerveny.max_skore())
                 self.nastavHod(volny_riadok, stlpec, self.hrac)
                 self.hrac = 2 if self.hrac == 1 else 1
@@ -133,7 +133,7 @@ class LogikaHry:
     def run(self):
 
         """Spustí hlavný cyklus hry."""
-        self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(),
+        self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
 
         while self.running:
@@ -148,8 +148,8 @@ class LogikaHry:
             elif self.state == "discovery":
                 buttons = self.gra.show_network(self.players)  # len testovacie udaje - potom zmenit
             elif self.state == "game":
-                leave_button = self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                                   self.skore_modry.get_celkove_skore(),
+                leave_button = self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                   self.skore_zlty.get_celkove_skore(),
                                                    self.skore_cerveny.get_celkove_skore(),
                                                    self.skore_cerveny.max_skore())
 
@@ -170,12 +170,12 @@ class LogikaHry:
 
                     elif self.state == "play_menu":
                         if buttons[0].collidepoint(event.pos):
-                            self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                                 self.skore_modry.get_celkove_skore(),
+                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                 self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
                             self.state = "game"
-                            self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                                self.skore_modry.get_celkove_skore(),
+                            self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                self.skore_zlty.get_celkove_skore(),
                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
                         elif buttons[1].collidepoint(event.pos):
                             self.state = "discovery"
@@ -187,12 +187,12 @@ class LogikaHry:
                             self.stop_mult()
                             self.state = "main_menu"
                         elif buttons[1].collidepoint(event.pos):  # TODO !!! Tu treba poslat invite !!!
-                            self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                                 self.skore_modry.get_celkove_skore(),
+                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                 self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
                             self.state = "game"
-                            self.gra.draw_board(self.VYHRA_MODRA, self.VYHRA_CERVENA,
-                                                self.skore_modry.get_celkove_skore(),
+                            self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                self.skore_zlty.get_celkove_skore(),
                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
 
                     elif self.state == "about":
@@ -200,7 +200,8 @@ class LogikaHry:
 
                     elif self.state == "game":
                         if leave_button.collidepoint(event.pos):
-                            self.gra.clear_board()
+                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
+                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
                             self.state = "main_menu"
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             self.kliknutie(event.pos[0])
@@ -222,26 +223,26 @@ class LogikaHry:
 
     # Vráti aktuálny stav hodov cervené farby
     def get_Cervena(self):
-        return self.VYHRA_CERVENA
+        return self.vyhra_cervena
 
-    # Vráti aktuálny stav hodov modrej farby
-    def get_Modra(self):
-        return self.VYHRA_MODRA
+    # Vráti aktuálny stav hodov zltej farby
+    def get_Zlta(self):
+        return self.vyhra_zlta
 
     def dosadenie_cervena(self):
-        self.VYHRA_CERVENA += 1
+        self.vyhra_cervena += 1
         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
         self.gra.winAnimation("cervena")
         self.obnovHru()
-        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(),
+        self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
                              self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
 
-    def dosadenie_modra(self):
-        self.VYHRA_MODRA += 1
-        self.gra.winAnimation("modra")
-        self.skore_modry.set_celkove_skore(self.pocet_kol)
+    def dosadenie_zlta(self):
+        self.vyhra_zlta += 1
+        self.gra.winAnimation("zlta")
+        self.skore_zlty.set_celkove_skore(self.pocet_kol)
         self.obnovHru()
-        self.gra.clear_board(self.VYHRA_MODRA, self.VYHRA_CERVENA, self.skore_modry.get_celkove_skore(),
+        self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
                              self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
 
     def vyhodnotHru(self):
@@ -257,7 +258,7 @@ class LogikaHry:
                         self.dosadenie_cervena()
 
                     else:
-                        self.dosadenie_modra()
+                        self.dosadenie_zlta()
 
         # Kontrola Vertikálne
         for i in range(3):
@@ -269,7 +270,7 @@ class LogikaHry:
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.dosadenie_cervena()
                     else:
-                        self.dosadenie_modra()
+                        self.dosadenie_zlta()
 
         # Kontrola Krížom
         for i in range(3):
@@ -283,7 +284,7 @@ class LogikaHry:
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.dosadenie_cervena()
                     else:
-                        self.dosadenie_modra()
+                        self.dosadenie_zlta()
         for i in range(3):
             for j in range(3, 7):
                 if (self.zoznam_policok[i][j] == self.zoznam_policok[i + 1][j - 1] ==
@@ -292,7 +293,7 @@ class LogikaHry:
                     if self.zoznam_policok[i][j] == LogikaHry.CERVENA:
                         self.dosadenie_cervena()
                     else:
-                        self.dosadenie_modra()
+                        self.dosadenie_zlta()
 
     def discovering(self):
         self.net.start_discovery()
