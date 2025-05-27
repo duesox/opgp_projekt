@@ -133,7 +133,7 @@ class LogikaHry:
     def run(self):
         """Spustí hlavný cyklus hry."""
         self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
-                            self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                            self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
 
         while self.running:
             self.gra.clock.tick(60)
@@ -151,7 +151,7 @@ class LogikaHry:
                 leave_button = self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                    self.skore_zlty.get_celkove_skore(),
                                                    self.skore_cerveny.get_celkove_skore(),
-                                                   self.skore_cerveny.max_skore())
+                                                   self.skore_cerveny.max_skore(),self.hrac)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -172,11 +172,11 @@ class LogikaHry:
                         if buttons[0].collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
                             self.state = "game"
                             self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                 self.skore_zlty.get_celkove_skore(),
-                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
                         elif buttons[1].collidepoint(event.pos):
                             self.state = "discovery"
                             self.start_mult()
@@ -189,11 +189,11 @@ class LogikaHry:
                         elif buttons[1].collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
                             self.state = "game"
                             self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                 self.skore_zlty.get_celkove_skore(),
-                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
 
                     elif self.state == "about":
                         self.state = "main_menu"
@@ -203,7 +203,7 @@ class LogikaHry:
                         if leave_button.collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
                             self.state = "main_menu"
                         else:
                             # Inak spracuj kliknutie na hraciu plochu
@@ -237,7 +237,7 @@ class LogikaHry:
         self.gra.winAnimation("cervena")
         self.obnovHru()
         self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
-                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
 
     def dosadenie_zlta(self):
         self.vyhra_zlta += 1
@@ -245,7 +245,7 @@ class LogikaHry:
         self.skore_zlty.set_celkove_skore(self.pocet_kol)
         self.obnovHru()
         self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
-                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
 
     def vyhodnotHru(self):
         # Kontrola Vodorovne
