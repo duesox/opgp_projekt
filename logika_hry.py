@@ -131,7 +131,6 @@ class LogikaHry:
 
     # game type - 0 - offline, 1 - online
     def run(self):
-
         """Spustí hlavný cyklus hry."""
         self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
@@ -139,6 +138,7 @@ class LogikaHry:
         while self.running:
             self.gra.clock.tick(60)
             self.clock.tick(60)
+
             if self.state == "main_menu":
                 buttons = self.gra.show_main_menu()
             elif self.state == "play_menu":
@@ -146,7 +146,7 @@ class LogikaHry:
             elif self.state == "about":
                 self.gra.show_about()
             elif self.state == "discovery":
-                buttons = self.gra.show_network(self.players)  # len testovacie udaje - potom zmenit
+                buttons = self.gra.show_network(self.players)
             elif self.state == "game":
                 leave_button = self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                    self.skore_zlty.get_celkove_skore(),
@@ -186,7 +186,7 @@ class LogikaHry:
                         if buttons[0].collidepoint(event.pos):
                             self.stop_mult()
                             self.state = "main_menu"
-                        elif buttons[1].collidepoint(event.pos):  # TODO !!! Tu treba poslat invite !!!
+                        elif buttons[1].collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
@@ -199,16 +199,18 @@ class LogikaHry:
                         self.state = "main_menu"
 
                     elif self.state == "game":
+                        # Kontrola kliknutia na tlačidlo Leave
                         if leave_button.collidepoint(event.pos):
-                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
-                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
+                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                 self.skore_zlty.get_celkove_skore(),
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore())
                             self.state = "main_menu"
-                        if event.type == pygame.MOUSEBUTTONDOWN:
+                        else:
+                            # Inak spracuj kliknutie na hraciu plochu
                             self.kliknutie(event.pos[0])
 
             self.gra.draw_notifications(self.gra.screen)
             pygame.display.flip()
-
 
         pygame.quit()
         sys.exit()

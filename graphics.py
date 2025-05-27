@@ -25,7 +25,7 @@ class Graphics:
 
         self.font = pygame.font.SysFont("Arial", 80, bold=True)
         self.small_font = pygame.font.SysFont("Arial", 50, bold=True)
-        self.not_font = pygame.font.SysFont("Arial", 20)
+        self.not_font = pygame.font.SysFont("Arial", 20,bold=True)
         self.rows = rows  # Nastaví počet riadkov na doske.
         self.cols = cols  # Nastaví počet stĺpcov na doske.
         width = cols * self.CELL_SIZE  # Šírka obrazovky (šírka všetkých stĺpcov).
@@ -61,6 +61,11 @@ class Graphics:
 
     def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore):
         self.screen.fill(self.BG_COLOR)
+
+        # Najprv zobraz skóre
+        self.zobraz_skore(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore)
+
+        # Potom nakresli hraciu plochu
         for row in range(self.rows):
             for col in range(self.cols):
                 color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
@@ -68,19 +73,19 @@ class Graphics:
                     col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250,
                     (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),
                                    self.RADIUS)
-        leave_button = pygame.Rect(10, 10, 120, 50)
-        pygame.draw.rect(self.screen, (255, 0, 0), leave_button)
-        leave_txt = self.font.render("Leave", True, (255, 255, 255))
-        self.screen.blit(leave_txt, (20, 15))
 
-        self.zobraz_skore(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore)
+        # Potom nakresli názov
         self.draw_title(self.screen)
 
 
-        # Súradnice obdĺžnika pozadia bunky
-        rect_x = col * self.CELL_SIZE + 250
-        rect_y = (row + 1) * self.CELL_SIZE
+        leave_button = pygame.Rect(50, 610, 80, 80)
+        pygame.draw.rect(self.screen, (255, 255, 0), leave_button, border_radius=40)
+        pygame.draw.rect(self.screen, (255, 0, 0), leave_button, border_radius=40,width=10)
 
+        # Vycentrovaný text v tlačidle
+        leave_txt = self.not_font.render("Menu", True, (0, 0, 0))
+        text_rect = leave_txt.get_rect(center=leave_button.center)
+        self.screen.blit(leave_txt, text_rect)
 
         return leave_button
 
@@ -242,7 +247,7 @@ class Graphics:
 
     def zobraz_skore(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore_max):
         # Vymaže ľavú stranu (kde je skóre)
-        pygame.draw.rect(self.screen, self.BG_COLOR, (0, 0, 200, self.HEIGHT))
+        pygame.draw.rect(self.screen, self.BG_COLOR, (0, 70, 200, self.HEIGHT))
 
         # Pozície pre text naľavo
         x_pos = 20
