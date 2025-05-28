@@ -122,7 +122,7 @@ class Graphics:
 
             self.draw_notifications(self.screen)
             pygame.display.flip()
-            pygame.time.delay(10)  # Zastaví na 10 ms pre efekt pádu.
+            pygame.time.delay(3)  # Zastaví na 10 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
