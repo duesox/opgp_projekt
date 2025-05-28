@@ -163,6 +163,9 @@ class LogikaHry:
                             self.state = "play_menu"
                         elif buttons[1].collidepoint(event.pos):
                             self.state = "about"
+                            if self.gra.leave_button().collidepoint(event.pos):
+                                self.state = "main_menu"
+
                         elif buttons[2].collidepoint(event.pos):
                             self.running = False
                         else:
@@ -181,6 +184,8 @@ class LogikaHry:
                             self.state = "discovery"
                             self.start_mult()
                             self.gra.set_empty_text('Vyhľadávam hráčov...')
+                        elif self.gra.leave_button().collidepoint(event.pos):
+                            self.state = "main_menu"
 
                     elif self.state == "discovery":
                         if self.gra.leave_button().collidepoint(event.pos):
