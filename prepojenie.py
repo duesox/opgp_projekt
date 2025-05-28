@@ -143,7 +143,7 @@ class Networking:
         self.on_move_recieved = lambda x: None
         self.on_settings_changed = lambda x_size, y_size, max_wins: None
 
-        self.on_game_invite = lambda nick, x_size, y_size, max_wins: None
+        self.on_game_invite = lambda nick, uuid: None
         self.on_game_invite_rejected = lambda: None
 
         self.on_connect = lambda: None
@@ -375,8 +375,7 @@ class Networking:
 
     def handle_accept(self, message):
         if message['confirm'] == 'confirm':
-            self.on_game_invite(message['nick'], message['x_size'], message['y_size'],
-                                message['max_wins'])  # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
+            self.on_game_invite(message['nick'], message['uuid'])  # tu si pouzivatel aj nastavi nastavenia hry, ze ako velka bude
         elif message['confirm'] == 'confirmed':
             self.connect_to_client(message['uuid'], 1)
         elif message['confirm'] == 'rejected':

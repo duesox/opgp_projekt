@@ -1,6 +1,5 @@
 import pygame
 import random
-import sys
 
 
 class Graphics:
@@ -8,6 +7,9 @@ class Graphics:
     RADIUS = CELL_SIZE // 2 - 5
     BG_COLOR = (0, 0, 139)
     EMPTY_COLOR = (220, 220, 220)
+    NOTIF_COLOR_INFO = (30, 30, 30)
+    NOTIF_COLOR_INV = (30, 30, 80)
+    NOTIF_COLOR_BORDER = (200, 200, 200)
     PLAYER_COLORS = [(255, 255,0), (255, 0, 0)]
 
 
@@ -18,7 +20,6 @@ class Graphics:
     NOTIF_WIDTH = 300
     NOTIF_HEIGHT = 50
     MARGIN = 10
-
 
     def __init__(self, rows, cols):
         pygame.init()  # Inicializuje Pygame knižnicu.
@@ -47,11 +48,9 @@ class Graphics:
         self.running = True
         self.background_gradient = self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255), (130, 130, 255),0.95)
 
-
         self.empty_text = ''
 
         self.notifications = []
-
 
     def draw_text_centered(self, text, y, size=40):
         font = pygame.font.SysFont("Arial", size)
@@ -82,12 +81,15 @@ class Graphics:
 
 
 
+
         self.leave_button()
+
 
     def leave_button(self):
         leave_button = pygame.Rect(50, 610, 80, 80)
         pygame.draw.rect(self.screen, (255, 255, 0), leave_button, border_radius=40)
         pygame.draw.rect(self.screen, (255, 0, 0), leave_button, border_radius=40, width=10)
+
 
         # Vycentrovaný text v tlačidle
         leave_txt = self.not_font.render("Menu", True, (0, 0, 0))
@@ -117,7 +119,6 @@ class Graphics:
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
             self.draw_board(vyhry_zlty,vyhry_cerveny,skore_zlty,skore_cerveny,skore, current_player)
             pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
-
 
             self.draw_notifications(self.screen)
             pygame.display.flip()
@@ -294,7 +295,6 @@ class Graphics:
         self.screen.blit(zlty_text, (x_pos, y_pos_max+240))
         self.screen.blit(zlty_skore, (x_pos, y_pos_max+290))
 
-
     def player_list_update(self, devices):
         pass
 
@@ -333,14 +333,18 @@ class Graphics:
                     x_pos += reduced_spacing
                 else:
                     x_pos += spacing
-    def show_notification(self, message):
-        self.notifications.append({"text": message, "start_time": pygame.time.get_ticks()})
 
-    def draw_notifications(self, surface):
+    def show_notification(self, message, typ='info', uuid=None):
+        self.notifications.append({"text": message, "start_time": pygame.time.get_ticks(), "type": typ, "uuid": uuid})
+
+    def draw_notifications(self, surface, typ='info', uuid=None):
         now = pygame.time.get_ticks()
         for i, notif in enumerate(self.notifications[:]):
             elapsed = now - notif["start_time"]
-            if elapsed > self.NOTIF_DURATION:
+            if elapsed > self.NOTIF_DURATION and notif['type'] == 'info':
+                self.notifications.remove(notif)
+                continue
+            if elapsed > self.NOTIF_DURATION * 10 and notif['type'] == 'invite':
                 self.notifications.remove(notif)
                 continue
 
@@ -348,14 +352,50 @@ class Graphics:
             x = surface.get_width() - self.NOTIF_WIDTH - self.MARGIN
             y = surface.get_height() - (self.NOTIF_HEIGHT + self.MARGIN) * (i + 1)
 
+            height = self.NOTIF_HEIGHT
+            color = self.NOTIF_COLOR_INFO
+            if notif['type'] == 'invite':
+                height = self.NOTIF_HEIGHT * 2
+                color = self.NOTIF_COLOR_INV
+
             # Draw background
-            notif_rect = pygame.Rect(x, y, self.NOTIF_WIDTH, self.NOTIF_HEIGHT)
-            pygame.draw.rect(surface, (30, 30, 30), notif_rect, border_radius=8)
+            notif_rect = pygame.Rect(x, y, self.NOTIF_WIDTH, height)
+            pygame.draw.rect(surface, color, notif_rect, border_radius=8)
             pygame.draw.rect(surface, (200, 200, 200), notif_rect, 2, border_radius=8)
 
             # Render text
             text_surf = self.not_font.render(notif["text"], True, (255, 255, 255))
             surface.blit(text_surf, (x + 10, y + 10))
+
+
+            if notif['type'] == 'invite':
+                accept_rect = pygame.Rect(x + 10, y + height - 40, self.NOTIF_WIDTH // 2 - 15, 30)
+                pygame.draw.rect(surface, (50, 150, 50), accept_rect, border_radius=5)
+                accept_text = self.not_font.render("Prijať", True, (255, 255, 255))
+                surface.blit(accept_text, (accept_rect.x + 10, accept_rect.y + 5))
+
+                reject_rect = pygame.Rect(x + self.NOTIF_WIDTH // 2 + 5, y + height - 40, self.NOTIF_WIDTH //2 - 15, 30)
+                pygame.draw.rect(surface, (150, 50, 50), reject_rect, border_radius=5)
+                surface.blit(reject_rect, (reject_rect.x + 10, reject_rect.y + 5))
+                notif["accept_rect"] = accept_rect
+                notif["reject_rect"] = reject_rect
+
+    def handle_notif_clicks(self, pos):
+        for notif in self.notifications[:]:
+            if notif['type'] == 'invite' and "accept_rect" in notif:
+                if notif["accept_rect"].collidepoint(pos):
+                    self.accept_invite(notif["uuid"])
+                    self.notifications.remove(notif)
+                    return True
+                if notif["reject_rect"].collidepoint(pos):
+                    self.reject_invite(notif["uuid"])
+                    self.notifications.remove(notif)
+                    return True
+        return False
+
+    def receive_invite(self, nick, uuid):
+        message = f"Pozvánka od hráča: {nick}"
+        self.show_notification(message, typ='invite', uuid=uuid)
 
     def draw_animated_background(self):
         # Inicializácia stavových premenných pri prvom použití
@@ -405,3 +445,4 @@ class Graphics:
 
             pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
         return surface
+
