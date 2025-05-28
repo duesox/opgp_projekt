@@ -45,6 +45,7 @@ class Graphics:
         self.big_font = pygame.font.SysFont("Arial", 60, bold=True)
         self.board = [[0 for _ in range(cols)] for _ in range(rows)]
         self.running = True
+        self.background_gradient = self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255), (130, 130, 255),0.95)
 
 
         self.empty_text = ''
@@ -60,7 +61,8 @@ class Graphics:
         return rect
 
     def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player):
-        self.screen.fill(self.BG_COLOR)
+        self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255),
+                                                               (130, 130, 255),0.8), (0, 0))
 
         # Najprv zobraz skóre
         self.zobraz_skore(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore)
@@ -171,7 +173,8 @@ class Graphics:
             pygame.display.flip()
 
     def show_main_menu(self):
-        self.screen.fill((30, 30, 30))
+
+        self.draw_animated_background()
         play_rect = self.draw_text_centered("Play", 200)
         about_rect = self.draw_text_centered("About", 300)
         exit_rect = self.draw_text_centered("Exit", 400)
@@ -179,16 +182,15 @@ class Graphics:
         return play_rect, about_rect, exit_rect
 
     def show_play_menu(self):
-        self.screen.fill((30, 30, 30))
+        self.draw_animated_background()
         local_rect = self.draw_text_centered("On this device", 250)
         online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
         self.draw_title(self.screen)
         self.leave_button()
 
         return local_rect, online_rect
-
     def show_network(self, players):
-        self.screen.fill((30, 30, 30))
+        self.draw_animated_background()
 
         font_main = pygame.font.SysFont("Arial", 20)
         font_small = pygame.font.SysFont("Arial", 14)
@@ -250,7 +252,7 @@ class Graphics:
 
 
     def show_about(self):
-        self.screen.fill((30, 30, 30))
+        self.draw_animated_background()
         lines = [
             "Hra Connect 4 je pre dvoch hráčov.",
             "Hráči striedavo vhadzujú žetóny do stĺpcov.",
@@ -264,11 +266,13 @@ class Graphics:
             self.draw_text_centered(line, y, 30)
             y += 50
         self.leave_button()
+
         self.draw_title(self.screen)
 
     def zobraz_skore(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore_max):
         # Vymaže ľavú stranu (kde je skóre)
-        pygame.draw.rect(self.screen, self.BG_COLOR, (0, 70, 200, self.HEIGHT))
+        self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT, (30, 30, 255),
+                                                               (130, 130, 255), 0.7), (0, 0))
 
         # Pozície pre text naľavo
         x_pos = 20
@@ -352,3 +356,52 @@ class Graphics:
             # Render text
             text_surf = self.not_font.render(notif["text"], True, (255, 255, 255))
             surface.blit(text_surf, (x + 10, y + 10))
+
+    def draw_animated_background(self):
+        # Inicializácia stavových premenných pri prvom použití
+        if not hasattr(self, "animated_tokens"):
+            self.animated_tokens = []
+            self.last_token_time = pygame.time.get_ticks()
+            self.spawn_delay = 2000  # milisekundy
+
+        # 1. Gradient pozadie
+        self.screen.blit(self.background_gradient, (0, 0))
+
+        # 2. Spawn nového tokenu
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_token_time > self.spawn_delay:
+            token = {
+                "x": random.randint(50, self.WIDTH - 50),
+                "y": -40,
+                "speed": random.uniform(2, 4),
+                "color": random.choice(["red", "yellow"]),
+                "radius": 20
+            }
+            self.animated_tokens.append(token)
+            self.last_token_time = current_time
+
+        # 3. Aktualizácia a vykreslenie tokenov
+        for token in self.animated_tokens[:]:
+            token["y"] += token["speed"]
+            color = (255, 0, 0) if token["color"] == "red" else (255, 255, 0)
+            pygame.draw.circle(self.screen, color, (int(token["x"]), int(token["y"])), self.RADIUS)
+
+            if token["y"] > self.HEIGHT + 40:
+                self.animated_tokens.remove(token)
+
+
+    def create_vertical_gradient_surface(self, width, height, top_color, bottom_color, darkness_factor=0.7):
+        surface = pygame.Surface((width, height))
+        for y in range(height):
+            ratio = y / height
+            r = int((top_color[0] + (bottom_color[0] - top_color[0]) * ratio) * darkness_factor)
+            g = int((top_color[1] + (bottom_color[1] - top_color[1]) * ratio) * darkness_factor)
+            b = int((top_color[2] + (bottom_color[2] - top_color[2]) * ratio) * darkness_factor)
+
+        # Zaisti, že farby nebudú menšie než 0
+            r = max(0, r)
+            g = max(0, g)
+            b = max(0, b)
+
+            pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
+        return surface
