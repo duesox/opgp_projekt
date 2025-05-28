@@ -163,6 +163,9 @@ class LogikaHry:
                             self.state = "play_menu"
                         elif buttons[1].collidepoint(event.pos):
                             self.state = "about"
+                            if self.gra.leave_button().collidepoint(event.pos):
+                                self.state = "main_menu"
+
                         elif buttons[2].collidepoint(event.pos):
                             self.running = False
                         else:
@@ -181,9 +184,11 @@ class LogikaHry:
                             self.state = "discovery"
                             self.start_mult()
                             self.gra.set_empty_text('Vyhľadávam hráčov...')
+                        elif self.gra.leave_button().collidepoint(event.pos):
+                            self.state = "main_menu"
 
                     elif self.state == "discovery":
-                        if buttons[0].collidepoint(event.pos):
+                        if self.gra.leave_button().collidepoint(event.pos):
                             self.stop_mult()
                             self.state = "main_menu"
                         elif buttons[1].collidepoint(event.pos):
@@ -200,7 +205,7 @@ class LogikaHry:
 
                     elif self.state == "game":
                         # Kontrola kliknutia na tlačidlo Leave
-                        if leave_button.collidepoint(event.pos):
+                        if self.gra.leave_button().collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)

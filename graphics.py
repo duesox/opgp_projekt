@@ -80,9 +80,12 @@ class Graphics:
 
 
 
+        self.leave_button()
+
+    def leave_button(self):
         leave_button = pygame.Rect(50, 610, 80, 80)
         pygame.draw.rect(self.screen, (255, 255, 0), leave_button, border_radius=40)
-        pygame.draw.rect(self.screen, (255, 0, 0), leave_button, border_radius=40,width=10)
+        pygame.draw.rect(self.screen, (255, 0, 0), leave_button, border_radius=40, width=10)
 
         # Vycentrovaný text v tlačidle
         leave_txt = self.not_font.render("Menu", True, (0, 0, 0))
@@ -90,6 +93,10 @@ class Graphics:
         self.screen.blit(leave_txt, text_rect)
 
         return leave_button
+
+
+
+
 
 
     def clear_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player):
@@ -168,12 +175,16 @@ class Graphics:
         play_rect = self.draw_text_centered("Play", 200)
         about_rect = self.draw_text_centered("About", 300)
         exit_rect = self.draw_text_centered("Exit", 400)
+        self.draw_title(self.screen)
         return play_rect, about_rect, exit_rect
 
     def show_play_menu(self):
         self.screen.fill((30, 30, 30))
         local_rect = self.draw_text_centered("On this device", 250)
         online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
+        self.draw_title(self.screen)
+        self.leave_button()
+
         return local_rect, online_rect
 
     def show_network(self, players):
@@ -190,11 +201,7 @@ class Graphics:
         screen_width, _ = self.screen.get_size()
         block_x = (screen_width - block_width) // 2  # Center horizontally
 
-        # --- Draw "Leave" Button (top-left) ---
-        leave_rect = pygame.Rect(20, 20, 80, 35)
-        pygame.draw.rect(self.screen, (200, 70, 70), leave_rect, border_radius=5)
-        leave_text = font_main.render("Leave", True, (255, 255, 255))
-        self.screen.blit(leave_text, (leave_rect.x + 10, leave_rect.y + 5))
+        self.leave_button()
 
         if len(players) > 0:
             nicks = []
@@ -236,10 +243,10 @@ class Graphics:
                 self.screen.blit(invite_text, (invite_rect[i][0].x + 10, invite_rect[i][0].y + 5))
 
             pygame.display.update()
-            return leave_rect, invite_rect
+            return  invite_rect
         else:
             self.draw_text_centered('Vyhľadávam hráčov...', 20)
-            return leave_rect
+            self.leave_button()
 
 
     def show_about(self):
@@ -256,6 +263,8 @@ class Graphics:
         for line in lines:
             self.draw_text_centered(line, y, 30)
             y += 50
+        self.leave_button()
+        self.draw_title(self.screen)
 
     def zobraz_skore(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore_max):
         # Vymaže ľavú stranu (kde je skóre)
