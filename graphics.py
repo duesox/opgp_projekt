@@ -175,12 +175,14 @@ class Graphics:
         play_rect = self.draw_text_centered("Play", 200)
         about_rect = self.draw_text_centered("About", 300)
         exit_rect = self.draw_text_centered("Exit", 400)
+        self.draw_title(self.screen)
         return play_rect, about_rect, exit_rect
 
     def show_play_menu(self):
         self.screen.fill((30, 30, 30))
         local_rect = self.draw_text_centered("On this device", 250)
         online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
+        self.draw_title(self.screen)
         self.leave_button()
 
         return local_rect, online_rect
@@ -262,6 +264,7 @@ class Graphics:
             self.draw_text_centered(line, y, 30)
             y += 50
         self.leave_button()
+        self.draw_title(self.screen)
 
     def zobraz_skore(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore_max):
         # Vymaže ľavú stranu (kde je skóre)
