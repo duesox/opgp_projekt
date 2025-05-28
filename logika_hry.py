@@ -158,13 +158,20 @@ class LogikaHry:
                     self.running = False
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
+
                     if self.state == "main_menu":
+
+
                         if buttons[0].collidepoint(event.pos):
                             self.state = "play_menu"
+
+
                         elif buttons[1].collidepoint(event.pos):
                             self.state = "about"
+
                             if self.gra.leave_button().collidepoint(event.pos):
                                 self.state = "main_menu"
+
 
                         elif buttons[2].collidepoint(event.pos):
                             self.running = False
@@ -172,6 +179,7 @@ class LogikaHry:
                             self.gra.show_notification("Netrafil si tlačidlo, skus ešte raz")
 
                     elif self.state == "play_menu":
+
                         if buttons[0].collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
