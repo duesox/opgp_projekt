@@ -49,7 +49,8 @@
   Zobrazuje skóre pre oboch hráčov.
 
 
-Licencia
+## Licencia
+
 Tento projekt je licencovaný pod MIT licenciou - pozri LICENSE pre viac informácií.
 
 
