@@ -191,6 +191,9 @@ class Networking:
         with self._devices_lock:
             return self._devices.copy()
 
+    def get_discovering(self):
+        return self._discovering
+
     def set_game_settings(self, x_size, y_size, max_wins):
         self._x_size = x_size
         self._y_size = y_size
@@ -199,10 +202,11 @@ class Networking:
     def get_game_settings(self):
         return self._x_size, self._y_size, self._max_wins
 
+
     def start_discovery(self):
         self._nic = 0
         self._discovering = True
-        self._disc_thread = threading.Thread(target=self.discovery_loop)
+        self._disc_thread = threading.Thread(target=self.discovery_loop, daemon=True)
         self._disc_thread.start()
         print('zacate vyhladavanie')
 
@@ -217,6 +221,7 @@ class Networking:
                 self._disc_thread.join(timeout=1)
         print("ukoncene sietovanie")
 
+# tu je chyba
     def discovery_loop(self):
         with not self._stop_event.is_set():
             previous_send_recv = 0
@@ -321,9 +326,13 @@ class Networking:
 
     def tcp_listener_loop(self):
         while self._tcp_recieving:
-            data = self._game_sock.recv(1024)
-            if data:
-                self.handle_message(data)
+            try:
+                data = self._game_sock.recv(1024)
+                if data:
+                    self.handle_message(data)
+            except socket.error as e:
+                print("TCP Error: ", e)
+                break
 
     # zapne sa pri prichode a vypne sa pri odchode z discovery/hry
     def start_tcp_listen(self):
