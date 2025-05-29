@@ -26,6 +26,8 @@ class Score:
                 return int(f.read())
         except FileNotFoundError:
             return 0
+    def vynulovat_skore(self):
+        self.celkove_skore=0
 
 
 

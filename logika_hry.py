@@ -76,11 +76,13 @@ class LogikaHry:
     def restartHru(self):
         self.pocet_kol = 0
         for i in range(self.POCET_RIADKOV):
-            self.zoznam_policok.append([])
+            self.zoznam_policok[i] = []
             for j in range(self.POCET_STLPCOV):
                 self.zoznam_policok[i].append(self.PRAZDNO)
         self.vyhra_cervena = 0
         self.vyhra_zlta = 0
+        self.skore_zlty.vynulovat_skore()
+        self.skore_cerveny.vynulovat_skore()
 
     # Nastavenie hodu na správne miesto a priradenie správnej farby
     def nastavHod(self, riadok, stlpec, farba):
@@ -147,6 +149,8 @@ class LogikaHry:
                 self.gra.show_about()
             elif self.state == "exit_menu":
                 buttons = self.gra.exit_window()
+            elif self.state == "menu":
+                buttons = self.gra.menu_window()
             elif self.state == "discovery":
                 buttons = self.gra.show_network(self.players)
             elif self.state == "game":
@@ -189,7 +193,7 @@ class LogikaHry:
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
-                            self.obnovHru()
+                            self.restartHru()
                             self.state = "game"
                             self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                 self.skore_zlty.get_celkove_skore(),
@@ -218,7 +222,7 @@ class LogikaHry:
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
-                            self.obnovHru()
+                            self.restartHru()
                             self.state = "game"
                             self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                 self.skore_zlty.get_celkove_skore(),
@@ -230,11 +234,12 @@ class LogikaHry:
                     elif self.state == "game":
                         # Kontrola kliknutia na tlačidlo Leave
                         if self.gra.leave_button().collidepoint(event.pos):
-                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                           """ self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                                              self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
                             self.obnovHru()
-                            self.state = "main_menu"
+                            self.state = "main_menu"""
+                           self.state = "menu"
                         else:
                             # Inak spracuj kliknutie na hraciu plochu
                             self.kliknutie(event.pos[0])
@@ -244,6 +249,25 @@ class LogikaHry:
                             self.running = False  # Ukončí hru
                         elif button_no.collidepoint(event.pos):
                             self.state = "main_menu"
+
+                    elif self.state == "menu":
+                        button_main_menu, button_obnov, button_restart = self.gra.menu_window()
+                        if button_main_menu.collidepoint(event.pos):
+                            self.state = "main_menu"
+                        elif button_obnov.collidepoint(event.pos):
+                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                 self.skore_zlty.get_celkove_skore(),
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                            self.obnovHru()
+                            self.state = "game"
+                        elif button_restart.collidepoint(event.pos):
+                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                 self.skore_zlty.get_celkove_skore(),
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                            self.restartHru()
+                            self.state = "game"
+                        else:
+                            self.state = "game"
 
             self.gra.draw_notifications(self.gra.screen)
             pygame.display.flip()

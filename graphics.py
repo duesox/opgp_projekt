@@ -175,7 +175,7 @@ class Graphics:
         running = True
         while running:
             self.clock.tick(60)
-            self.screen.fill((30, 30, 30))
+            self.draw_animated_background()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     running = False
@@ -280,6 +280,85 @@ class Graphics:
 
         return button_rect,button_rect2
 
+    def menu_window(self,widht=300,height=450,):
+
+        x=self.WIDTH//2-widht//2
+        y=self.HEIGHT//2-height//2
+
+        menu_rect = pygame.Rect(x, y, widht, height)
+        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x-8, y-8, widht+16, height+16), border_radius=8)
+        pygame.draw.rect(self.screen, (51, 51, 255), menu_rect, border_radius=8)
+
+        menu_font = pygame.font.SysFont("Arial", 40, bold=True)
+
+        text_surface = menu_font.render("Menu", True, (32, 32, 32))
+        text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y + 20))
+        self.screen.blit(text_surface, text_rect)
+
+        text = "Main Menu"
+        main_menu_txt = menu_font.render(text, True, (0, 0, 0))
+        main_menu_rect = main_menu_txt.get_rect(center=(self.WIDTH // 2 , y + 100))
+
+        text = "Obnov Hru"
+        obnov_txt = menu_font.render(text, True, (0, 0, 0))
+        obnov_rect = obnov_txt.get_rect(center=(self.WIDTH // 2, y + 200))
+
+        text = "Reštart Hry"
+        restart_txt = menu_font.render(text, True, (0, 0, 0))
+        restart_rect = restart_txt.get_rect(center=(self.WIDTH // 2 , y + 300))
+
+        text = "Exit"
+        exit_txt = menu_font.render(text, True, (0, 0, 0))
+        exit_rect = exit_txt.get_rect(center=(self.WIDTH // 2, y + 400))
+
+        padding = 35
+        button_main_menu_rect = pygame.Rect(
+            main_menu_rect.left - padding // 2,
+            main_menu_rect.top - padding // 2,
+            main_menu_rect.width + padding,
+            main_menu_rect.height + padding)
+
+        button_exit_rect = pygame.Rect(
+            exit_rect.left - padding // 2,
+            exit_rect.top - padding // 2,
+            exit_rect.width + padding,
+            exit_rect.height + padding)
+
+
+        button_obnov_rect = pygame.Rect(
+            obnov_rect.left - padding // 2,
+            obnov_rect.top - padding // 2,
+            obnov_rect.width + padding,
+            obnov_rect.height + padding)
+
+        button_restart_rect = pygame.Rect(
+            restart_rect.left - padding // 2,
+            restart_rect.top - padding // 2,
+            restart_rect.width + padding,
+            restart_rect.height + padding)
+
+        pygame.draw.rect(self.screen, (255, 0, 0), button_main_menu_rect,border_radius=10)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_obnov_rect,border_radius=10)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_restart_rect,border_radius=10)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_exit_rect,border_radius=40)
+
+        inner_padding = 9  # hrúbka červeného okraja
+
+        inner_main_menu_rect = button_main_menu_rect.inflate(-2 * inner_padding, -2 * inner_padding)
+        inner_obnov_rect = button_obnov_rect.inflate(-2 * inner_padding, -2 * inner_padding)
+        inner_restart_rect = button_restart_rect.inflate(-2 * inner_padding, -2 * inner_padding)
+
+        pygame.draw.rect(self.screen, (255, 255, 0), inner_main_menu_rect)
+        pygame.draw.rect(self.screen, (255, 255, 0), inner_obnov_rect)
+        pygame.draw.rect(self.screen, (255, 255, 0), inner_restart_rect)
+
+        self.screen.blit(main_menu_txt, main_menu_rect)
+        self.screen.blit(obnov_txt, obnov_rect)
+        self.screen.blit(restart_txt, restart_rect)
+        self.screen.blit(exit_txt, exit_rect)
+
+        return main_menu_rect,obnov_rect,restart_rect
+
 
 
     def show_network(self, players):
@@ -380,7 +459,7 @@ class Graphics:
         cerveny_text = self.small_font.render(f"Červený: {vyhry_cerveny}", True, (255, 0, 0))
         cerveny_skore = self.small_font.render(f"Skóre: {skore_cerveny}", True, (255, 0, 0))
 
-        zlty_text = self.small_font.render(f"Žltá: {vyhry_zlty}", True, (255, 255, 0))
+        zlty_text = self.small_font.render(f"Žltý: {vyhry_zlty}", True, (255, 255, 0))
         zlty_skore = self.small_font.render(f"Skóre: {skore_zlty}", True, (255, 255, 0))
 
         self.screen.blit(max_skore_text, (x_pos, y_pos_max))
