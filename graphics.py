@@ -52,13 +52,32 @@ class Graphics:
 
         self.notifications = []
 
-
     def draw_text_centered(self, text, y, size=40):
-        font = pygame.font.SysFont("Arial", size)
-        txt = font.render(text, True, (255, 255, 255))
-        rect = txt.get_rect(center=(self.WIDTH // 2, y))
-        self.screen.blit(txt, rect)
-        return rect
+        font = pygame.font.SysFont("Arial", size, bold=True)
+        txt = font.render(text, True, (0, 0, 0))
+        text_rect = txt.get_rect(center=(self.WIDTH // 2, y))
+
+        # Nastav veľkosť okolo textu
+        padding = 35
+        button_rect = pygame.Rect(
+            text_rect.left - padding // 2,
+            text_rect.top - padding // 2,
+            text_rect.width + padding,
+            text_rect.height + padding
+        )
+
+        # Kresli červený okraj (vonkajší obdĺžnik)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_rect)
+
+        # Kresli žltý vnútorný obdĺžnik (výplň tlačidla)
+        inner_padding = 9  # hrúbka červeného okraja
+        inner_rect = button_rect.inflate(-2 * inner_padding, -2 * inner_padding)
+        pygame.draw.rect(self.screen, (255, 255, 0), inner_rect)
+
+        # Vykresli text
+        self.screen.blit(txt, text_rect)
+
+        return button_rect  # môžeš použiť na detekciu kliknutia
 
     def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player):
         self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255),
@@ -247,7 +266,7 @@ class Graphics:
             pygame.display.update()
             return  invite_rect
         else:
-            self.draw_text_centered('Vyhľadávam hráčov...', 20)
+            self.draw_text_centered('Vyhľadávam hráčov...', 50)
             self.leave_button()
 
 
@@ -256,15 +275,19 @@ class Graphics:
         lines = [
             "Hra Connect 4 je pre dvoch hráčov.",
             "Hráči striedavo vhadzujú žetóny do stĺpcov.",
-            "Cieľom je mať 4 rovnaké žetóny v rade - horizontálne, vertikálne alebo diagonálne.",
+            "Cieľom je mať 4 rovnaké žetóny v rade:",
+            "horizontálne, vertikálne alebo diagonálne.",
             "Hráč, ktorý to dosiahne ako prvý, vyhráva.",
             "Ak je mriežka plná a nikto nevyhral, je to remíza.",
-            "Klikni hocikde pre návrat do menu."
         ]
-        y = 150
+        y = 170
         for line in lines:
-            self.draw_text_centered(line, y, 30)
+            text_surface = self.font.render(line, True, (0,0,0))
+            text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y))
+            self.screen.blit(text_surface, text_rect)
             y += 50
+
+
         self.leave_button()
 
         self.draw_title(self.screen)
