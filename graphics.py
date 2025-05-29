@@ -77,7 +77,7 @@ class Graphics:
         # Vykresli text
         self.screen.blit(txt, text_rect)
 
-        return button_rect  # môžeš použiť na detekciu kliknutia
+        return button_rect
 
     def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player):
         self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255),
@@ -225,6 +225,63 @@ class Graphics:
         self.leave_button()
 
         return local_rect, online_rect
+    def exit_window(self,widht=400,height=200,):
+        self.show_main_menu()
+
+        x=self.WIDTH//2-widht//2
+        y=self.HEIGHT//2-height//2
+
+        exit_rect = pygame.Rect(x, y, widht, height)
+        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x-8, y-8, widht+16, height+16), border_radius=8)
+        pygame.draw.rect(self.screen, (51, 51, 255), exit_rect, border_radius=8)
+
+        exit_font = pygame.font.SysFont("Arial", 30, bold=True)
+
+        text_surface = exit_font.render("Are you sure you want to exit?", True, (32, 32, 32))
+        text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y+20))
+        self.screen.blit(text_surface, text_rect)
+
+        text= "No"
+        txt =exit_font.render(text, True, (0, 0, 0))
+        text_rect2 = txt.get_rect(center=(self.WIDTH // 2 - 100, y+120))
+
+        text2 = "Yes"
+        txt2 = exit_font.render(text2, True, (0, 0, 0))
+        text_rect = txt.get_rect(center=(self.WIDTH // 2 + 100, y + 120))
+
+        # Nastav veľkosť okolo textu
+        padding = 35
+        button_rect = pygame.Rect(
+            text_rect.left - padding // 2,
+            text_rect.top - padding // 2,
+            text_rect.width + padding,
+            text_rect.height + padding )
+
+        button_rect2 = pygame.Rect(
+            text_rect2.left - padding // 2,
+            text_rect2.top - padding // 2,
+            text_rect2.width + padding+10,
+            text_rect2.height + padding
+        )
+
+        # Kresli červený okraj (vonkajší obdĺžnik)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_rect)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_rect2)
+        inner_padding = 9  # hrúbka červeného okraja
+
+        inner_rect2 = button_rect2.inflate(-2 * inner_padding, -2 * inner_padding)
+        inner_rect = button_rect.inflate(-2 * inner_padding, -2 * inner_padding)
+
+        pygame.draw.rect(self.screen, (255, 255, 0), inner_rect)
+        pygame.draw.rect(self.screen, (255, 255, 0), inner_rect2)
+        # Vykresli text
+        self.screen.blit(txt, text_rect)
+        self.screen.blit(txt2, text_rect2)
+
+        return button_rect,button_rect2
+
+
+
     def show_network(self, players):
         self.draw_animated_background()
 

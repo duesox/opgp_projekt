@@ -145,6 +145,8 @@ class LogikaHry:
                 buttons = self.gra.show_play_menu()
             elif self.state == "about":
                 self.gra.show_about()
+            elif self.state == "exit_menu":
+                buttons = self.gra.exit_window()
             elif self.state == "discovery":
                 buttons = self.gra.show_network(self.players)
             elif self.state == "game":
@@ -175,7 +177,9 @@ class LogikaHry:
 
 
                         elif buttons[2].collidepoint(event.pos):
-                            self.running = False
+                            self.state="exit_menu"
+
+
                         else:
                             self.gra.show_notification("Netrafil si tlačidlo, skus ešte raz")
 
@@ -234,6 +238,12 @@ class LogikaHry:
                         else:
                             # Inak spracuj kliknutie na hraciu plochu
                             self.kliknutie(event.pos[0])
+                    elif self.state == "exit_menu":
+                        button_no, button_yes = self.gra.exit_window()
+                        if button_yes.collidepoint(event.pos):
+                            self.running = False  # Ukončí hru
+                        elif button_no.collidepoint(event.pos):
+                            self.state = "main_menu"
 
             self.gra.draw_notifications(self.gra.screen)
             pygame.display.flip()
