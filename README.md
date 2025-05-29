@@ -48,13 +48,9 @@
 ### Skóre: 
   Zobrazuje skóre pre oboch hráčov.
 
-### Prispievanie
-  Ak chcete prispieť k tomuto projektu, môžete:
-  Vytvoriť issue pre návrhy na vylepšenie alebo hlásenie chýb.
-  Poslať pull request s vašimi zmenami.
-  Pomôcť s ďalším vylepšením a optimalizáciou kódu.
 
-Licencia
+## Licencia
+
 Tento projekt je licencovaný pod MIT licenciou - pozri LICENSE pre viac informácií.
 
 
