@@ -261,6 +261,22 @@ class LogikaHry:
                              self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
 
     def vyhodnotHru(self):
+        a = False
+        for i in range(6):
+            for j in range(7):
+                if self.zoznam_policok[i][j] != LogikaHry.PRAZDNO:
+                    continue
+                else:
+                    a=True
+        if a==False:
+            self.gra.draw_animation()
+            self.obnovHru()
+            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
+                            self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),
+                            self.hrac)
+            a=True
+
+
         # Kontrola Vodorovne
         # i = riadok, j = stlpec
         for i in range(6):

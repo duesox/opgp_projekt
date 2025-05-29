@@ -191,6 +191,21 @@ class Graphics:
 
             pygame.display.flip()
 
+    def draw_animation(self):
+
+        running = True
+        while running:
+            self.clock.tick(60)
+            self.draw_animated_background()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT or event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    running = False
+            text = self.font.render("Remíza!", True, (32, 32, 32))
+            text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
+            self.screen.blit(text, text_rect)
+
+            pygame.display.flip()
+
     def show_main_menu(self):
 
         self.draw_animated_background()
