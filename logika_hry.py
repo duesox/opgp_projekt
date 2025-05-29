@@ -185,10 +185,12 @@ class LogikaHry:
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                            self.obnovHru()
                             self.state = "game"
                             self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                 self.skore_zlty.get_celkove_skore(),
                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+
                         elif buttons[1].collidepoint(event.pos):
                             self.state = "discovery"
                             self.start_mult()
@@ -212,6 +214,7 @@ class LogikaHry:
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                            self.obnovHru()
                             self.state = "game"
                             self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                 self.skore_zlty.get_celkove_skore(),
@@ -226,6 +229,7 @@ class LogikaHry:
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                            self.obnovHru()
                             self.state = "main_menu"
                         else:
                             # Inak spracuj kliknutie na hraciu plochu
