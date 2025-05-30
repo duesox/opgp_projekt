@@ -3,10 +3,10 @@
   Tento projekt je implementácia populárnej stolnej hry Connect 4 v Pythone pomocou knižnice pygame. Po spustení sa objaví menu, kde si hráč môže vybrať, či chce hrať na 1 PC (offline) alebo cez LAN sieť (online).
 
 # 📄 Obsah 
-- [Inštalácia](#-instalacia)
-- [Použitie](#-pouzitie)
-- [Opis projektu](#-opis-projektu)
-- [Licencia](#licencia)
+- [Inštalácia](#-inštalácia)
+- [Použitie](#-použitie)
+- [Opis projektu](#ℹ%EF%B8%8F-opis-projektu)
+- [Licencia](#%EF%B8%8F-licencia)
 
 # 💾 Inštalácia
   Stiahnite si súbor hry ktorý obsahuje všetky potrebné knižnice a súbory pre spustenie hry. Tento súbor je už pripravený na spustenie bez nutnosti inštalácie ďalších závislostí. Stačí ho spustit, prípadne udeliť administrátorské práva, aby mohla hra komunikovať cez internet a môžete hrať! 🙂
