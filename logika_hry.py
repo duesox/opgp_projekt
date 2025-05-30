@@ -40,22 +40,25 @@ class LogikaHry:
         self.players = dict()
 
         # network callbacky
-        self.recv_move = self.net.on_move_recieved
-        self.recv_sett = self.net.on_settings_changed
-        self.recv_inv = self.net.on_game_invite
-        self.recv_inv_rej = self.net.on_game_invite_rejected
+        self.net.on_move_recieved = self.recv_move
+        self.net.on_settings_changed = self.recv_sett
+        self.net.on_game_invite = self.recv_inv
+        self.net.on_game_invite_rejected = self.recv_inv_rej
         # start stop multiplayer hry
         self.start_mult = self.net.on_connect
         self.stop_mult = self.net.on_disconnect
         # updatenuty list hracov
-        self.discovery_update = self.net.on_new_discovery
-        # dlho nedonajdeni hraci
-        self.no_players = self.net.no_devices_found
+        self.net.on_new_discovery = self.discovery_update
+        # dlho nenajdeni hraci
+        self.net.no_devices_found = self.no_players
+        # TODO implementovat otazku a reakciu na restart a retry
+        """
+        self.net.on_request_restart = self.restart_ask
+        self.net.on_request_retry = self.retry_ask
+        self.net.on_game_restart = self.restart_mult
+        self.net.on_game_retry = self.retry_mult
+        """
 
-        self.restart_ask = self.net.on_request_restart
-        self.retry_ask = self.net.on_request_retry
-        self.restart_mult = self.net.on_game_restart
-        self.retry_mult = self.net.on_game_retry
 
         self.mult_game = False
         self.mult_color = 0  # 0 - cervena, 1 zlta
@@ -63,6 +66,11 @@ class LogikaHry:
 
         self.nickname = self.net.get_nickname()
         self.clock = pygame.time.Clock()
+        print("N   N EEEE ZZZZZ  AA  TTTTTT V     V  AA  RRRR   AA  TTTTTT     TTTTTT  OOO  TTTTTT  OOO       OOO  K  K N   N  OOO")
+        print("NN  N E       Z  A  A   TT   V     V A  A R   R A  A   TT         TT   O   O   TT   O   O     O   O K K  NN  N O   O")
+        print("N N N EEE    Z   AAAA   TT    V   V  AAAA RRRR  AAAA   TT         TT   O   O   TT   O   O     O   O KK   N N N O   O")
+        print("N  NN E     Z    A  A   TT     V V   A  A R R   A  A   TT         TT   O   O   TT   O   O     O   O K K  N  NN O   O")
+        print("N   N EEEE ZZZZZ A  A   TT      V    A  A R  RR A  A   TT         TT    OOO    TT    OOO       OOO  K  K N   N  OOO")
 
     # Metóda na vymazanie dát zo zoznamu
     def obnovHru(self):
@@ -306,7 +314,7 @@ class LogikaHry:
                     continue
                 else:
                     a=True
-        if a==False:
+        if not a:
             self.gra.draw_animation()
             self.obnovHru()
             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
@@ -368,10 +376,15 @@ class LogikaHry:
         self.net.start_discovery()
 
     def discovery_update(self, devices):
+        print("nazdar")
         self.players = []
-        for ip, info in devices:
-            self.players.append([info['nick'], info['uuid'], info['timestamp']])
-        self.gra.show_network(self.players)
+        print(devices)
+        if len(devices) > 0:
+            for ip, info in devices.items():
+                self.players.append([info['nick'], info['uuid'], info['last_ping']])
+            self.gra.show_network(self.players)
+        if len(devices) == 0:
+            self.gra.show_network([])
 
     def recv_inv(self, nick, uuid):  # mozno tu este max_wins
         # zobrazit upozornenie a moznosti hej a ne

@@ -277,8 +277,7 @@ class Networking:
                             for recv in ready_socks:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
-                                if message["app"] == "connect43sa" and message["type"] == "discovery" and message[
-                                    'uuid'] != self._uuid:
+                                if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
                                     """
                                     for r in list(recvs.keys()):
                                         if r != recv:
@@ -288,24 +287,24 @@ class Networking:
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
-                                            if self._devices[ip]['last_ping'] == message['timestamp']:
+                                            if self._devices[ip]['timestamp'] == message['timestamp']:
                                                 print("skipnuty rovnaky timestamp")
                                                 continue
-                                            self._devices[ip]['last_ping'] = int(time.time())
+                                            self._devices[ip]['timestamp'] = int(time.time())
                                             print("zmeneny timestamp")
                                         else:
                                             self._devices[ip] = {
                                                 'nick': message['nick'],
                                                 'uuid': message['uuid'],
-                                                'last_ping': int(time.time()),
+                                                'timestamp': int(time.time()),
+                                                'last_ping': int(time.time())-message['timestamp'],
                                             }
-                                            # TODO toto potom treba presunut za except
-                                            self.on_new_discovery(self._devices)
                                             print("pridane zar")
                                     print(f"sprava prijata: {message}")
                                     previous_device = current_time
                         except (socket.timeout, json.JSONDecodeError):
                             continue
+                        self.on_new_discovery(self._devices)
 
                 if self._nic >= 6:
                     # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
@@ -313,7 +312,7 @@ class Networking:
                 if current_time - previous_del > 15:
                     previous_del = current_time
                     with self._devices_lock:
-                        old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
+                        old_ips = [ip for ip, info in self._devices.items() if current_time - info['timestamp'] > 15]
                         for ip in old_ips:
                             del self._devices[ip]
                             print(f'vymazana stara ip: {ip}')
