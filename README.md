@@ -26,7 +26,7 @@
 # ℹ️ Opis projektu
   Tento projekt implementuje hru Connect 4 v Pythone pomocou knižnice pygame. Hra obsahuje:
 - ### Menu na výber režimu hry
-  Po spustení sa zobrazí menu, kde si hráči vyberú, či chcú hrať proti počítaču alebo proti druhému hráčovi.
+  Po spustení sa zobrazí menu, kde si hráči vyberú, či chcú hrať na 1 zariadení, alebo cez sieť na 2.
 - ### Logika hry
   Hra hodnotí ťahy, vyhodnocuje víťaza a kontroluje remízu.
 - ### Hlavné funkcie
