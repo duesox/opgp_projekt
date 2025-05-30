@@ -1,7 +1,6 @@
 import os
 import sys
 import threading
-import uuid
 import netifaces
 import select
 import comtypes.client as cc
@@ -12,12 +11,12 @@ import json
 import socket
 import time
 
+from ukladanie import Saving
+
 PORT = 4037
 MPORT = 4038  # multicast port
 MGROUP = '224.0.0.123'
-UUID_FILE = 'uuid.txt'
 PROTOCOLS = {6: 'tcp', 17: 'udp'}
-
 
 # ip add return as bits
 def ip2bytes(addr):
@@ -120,6 +119,7 @@ def is_admin():
 
 class Networking:
     def __init__(self):
+        self.save = Saving()
         self._game_sock = None
         self._devices = {}
         self._devices_lock = threading.Lock()
@@ -164,19 +164,14 @@ class Networking:
 
         self._tcp_recieving = False
 
-        if os.path.exists(UUID_FILE):
-            with open(UUID_FILE, 'r') as f:
-                riadky = f.readline().strip().split()
-                self._uuid = str(riadky[0])
-                if len(riadky) == 2:
-                    self.nick = str(riadky[1])
+        data = self.save.load_and_decrypt()
 
-        else:
-            self._uuid = str(uuid.uuid4())
-            with open(UUID_FILE, 'w') as f:
-                f.write(str(self._uuid))
+        self._uuid = data[0]
+        self._nick = data[1]
 
         _manage_firewall_rules()
+
+
 
     def get_uuid(self):
         print(self._uuid)
@@ -206,6 +201,7 @@ class Networking:
     def start_discovery(self):
         self._nic = 0
         self._discovering = True
+        self._stop_event.clear()
         self._disc_thread = threading.Thread(target=self.discovery_loop, daemon=True)
         self._disc_thread.start()
         print('zacate vyhladavanie')
@@ -305,6 +301,12 @@ class Networking:
                         except (socket.timeout, json.JSONDecodeError):
                             continue
                         self.on_new_discovery(self._devices)
+                    with self._devices_lock:
+                        for ip in self._devices:
+                            last = int(time.time()) - self._devices[ip]['timestamp']
+                            if last < 0:
+                                last = 0
+                            self._devices[ip]['last_ping'] = last
 
                 if self._nic >= 6:
                     # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
@@ -443,8 +445,8 @@ class Networking:
                     message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
                                'confirm': confirm}
                 send_message(message, accept_sock)
-        except (socket.error, ConnectionRefusedError) as e:
-            raise "Pozvanku sa nepodarilo odoslat."
+        except (socket.error, ConnectionRefusedError):
+            raise Exception("Pozvanku sa nepodarilo odoslat.")
 
     def send_move(self, x):
         message = {'app': 'connect43sa', 'type': 'move', 'uuid': self._uuid, 'x': x}

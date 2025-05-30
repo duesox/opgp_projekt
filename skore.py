@@ -1,6 +1,9 @@
+from ukladanie import Saving
+
 class Score:
 
     def __init__(self,Pocet_riadkov,Pocet_stlpcov):
+        self.save = Saving()
         self.skore=Pocet_riadkov*Pocet_stlpcov*50
         self.celkove_skore=0
 
@@ -17,15 +20,13 @@ class Score:
     def vyhodnot_max_skore(self):
         max_skore=self.max_skore()
         if self.celkove_skore>max_skore:
-            with open("max_skore.txt", "w") as f:
-                f.write(str(self.celkove_skore))
+            zoznam = self.save.load_and_decrypt()
+            zoznam[2] = self.celkove_skore
+            self.save.encrypt_and_save(zoznam)
 
     def max_skore(self):
-        try:
-            with open("max_skore.txt", "r") as f:
-                return int(f.read())
-        except FileNotFoundError:
-            return 0
+        return int(self.save.load_and_decrypt()[2])
+
     def vynulovat_skore(self):
         self.celkove_skore=0
 

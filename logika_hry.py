@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-import unicodedata as ud
 import graphics as gr
 import pygame
 import sys
@@ -7,6 +5,7 @@ import threading
 
 from prepojenie import Networking
 from skore import Score
+
 
 
 class LogikaHry:
@@ -221,13 +220,17 @@ class LogikaHry:
 
                     elif self.state == "discovery":
                         if self.gra.leave_button().collidepoint(event.pos):
+                            self.gra.draw_text_centered("Ukončujem vyhľadávanie", 50)
                             self.state = "main_menu"
                             self.stop_mult()
                         else:
-                            for button in buttons:
-                                if button[0].collidepoint(event.pos):
-                                    self.send_invite(button[1])
-                                    self.gra.show_notification("Bola odoslaná pozvánka.")
+                            try:
+                                for button in buttons:
+                                    if button[0].collidepoint(event.pos):
+                                        self.send_invite(button[1])
+                                        self.gra.show_notification("Bola odoslaná pozvánka.")
+                            except None:
+                                pass
 
                     elif self.state == "about":
                         self.state = "main_menu"
@@ -422,7 +425,8 @@ class LogikaHry:
             try:
                 self.net.game_accept(uuid)
             except Exception as e:
-                self.gra.show_notification(e)
+                print(e)
+                self.gra.show_notification(str(e))
         threading.Thread(target=_thread_invite, daemon=True).start()
         self.player_color = 0
 
