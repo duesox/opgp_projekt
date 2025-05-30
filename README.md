@@ -3,10 +3,10 @@
   Tento projekt je implementácia populárnej stolnej hry Connect 4 v Pythone pomocou knižnice pygame. Po spustení sa objaví menu, kde si hráč môže vybrať, či chce hrať na 1 PC (offline) alebo cez LAN sieť (online).
 
 # 📄 Obsah 
-- [Inštalácia](#-instalacia)
-- [Použitie](#-pouzitie)
-- [Opis projektu](#-opis-projektu)
-- [Licencia](#-licencia)
+- [Inštalácia](#-inštalácia)
+- [Použitie](#-použitie)
+- [Opis projektu](#ℹ%EF%B8%8F-opis-projektu)
+- [Licencia](#%EF%B8%8F-licencia)
 
 # 💾 Inštalácia
   Stiahnite si súbor hry ktorý obsahuje všetky potrebné knižnice a súbory pre spustenie hry. Tento súbor je už pripravený na spustenie bez nutnosti inštalácie ďalších závislostí. Stačí ho spustit, prípadne udeliť administrátorské práva, aby mohla hra komunikovať cez internet a môžete hrať! 🙂
@@ -38,36 +38,3 @@
 
 # 🏛️ Licencia
 Tento projekt je licencovaný pod MIT licenciou - pozri LICENSE pre viac informácií.
-
-
-
-
-
-
-# Example headings
-
-## Sample Section
-
-## This'll be a _Helpful_ Section About the Greek Letter Θ!
-A heading containing characters not allowed in fragments, UTF-8 characters, two consecutive spaces between the first and second words, and formatting.
-
-## This heading is not unique in the file
-
-TEXT 1
-
-## This heading is not unique in the file
-
-TEXT 2
-
-# Links to the example headings above
-
-Link to the sample section: [Link Text](#sample-section).
-
-Link to the helpful section: [Link Text](#thisll-be-a-helpful-section-about-the-greek-letter-Θ).
-
-Link to the first non-unique section: [Link Text](#this-heading-is-not-unique-in-the-file).
-
-Link to the second non-unique section: [Link Text](#this-heading-is-not-unique-in-the-file-1).
-
-
-
