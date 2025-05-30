@@ -6,7 +6,7 @@
 - [Inštalácia](#-instalacia)
 - [Použitie](#-pouzitie)
 - [Opis projektu](#-opis-projektu)
-- [Licencia](#-licencia)
+- [Licencia](#licencia)
 
 # 💾 Inštalácia
   Stiahnite si súbor hry ktorý obsahuje všetky potrebné knižnice a súbory pre spustenie hry. Tento súbor je už pripravený na spustenie bez nutnosti inštalácie ďalších závislostí. Stačí ho spustit, prípadne udeliť administrátorské práva, aby mohla hra komunikovať cez internet a môžete hrať! 🙂
