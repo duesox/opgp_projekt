@@ -1,7 +1,6 @@
 import os
 import sys
 import threading
-import uuid
 import netifaces
 import select
 import comtypes.client as cc
@@ -12,12 +11,12 @@ import json
 import socket
 import time
 
+from ukladanie import Saving
+
 PORT = 4037
 MPORT = 4038  # multicast port
 MGROUP = '224.0.0.123'
-UUID_FILE = 'uuid.txt'
 PROTOCOLS = {6: 'tcp', 17: 'udp'}
-
 
 # ip add return as bits
 def ip2bytes(addr):
@@ -120,6 +119,7 @@ def is_admin():
 
 class Networking:
     def __init__(self):
+        self.save = Saving()
         self._game_sock = None
         self._devices = {}
         self._devices_lock = threading.Lock()
@@ -164,19 +164,14 @@ class Networking:
 
         self._tcp_recieving = False
 
-        if os.path.exists(UUID_FILE):
-            with open(UUID_FILE, 'r') as f:
-                riadky = f.readline().strip().split()
-                self._uuid = str(riadky[0])
-                if len(riadky) == 2:
-                    self.nick = str(riadky[1])
+        data = self.save.load_and_decrypt()
 
-        else:
-            self._uuid = str(uuid.uuid4())
-            with open(UUID_FILE, 'w') as f:
-                f.write(str(self._uuid))
+        self._uuid = data[0]
+        self._nick = data[1]
 
         _manage_firewall_rules()
+
+
 
     def get_uuid(self):
         print(self._uuid)
@@ -206,6 +201,7 @@ class Networking:
     def start_discovery(self):
         self._nic = 0
         self._discovering = True
+        self._stop_event.clear()
         self._disc_thread = threading.Thread(target=self.discovery_loop, daemon=True)
         self._disc_thread.start()
         print('zacate vyhladavanie')
@@ -277,8 +273,7 @@ class Networking:
                             for recv in ready_socks:
                                 data, addr = recv.recvfrom(1024)
                                 message = json.loads(data.decode())
-                                if message["app"] == "connect43sa" and message["type"] == "discovery" and message[
-                                    'uuid'] != self._uuid:
+                                if message["app"] == "connect43sa" and message["type"] == "discovery" and message['uuid'] != self._uuid:
                                     """
                                     for r in list(recvs.keys()):
                                         if r != recv:
@@ -288,24 +283,30 @@ class Networking:
                                     ip = addr[0]
                                     with self._devices_lock:
                                         if ip in self._devices:
-                                            if self._devices[ip]['last_ping'] == message['timestamp']:
+                                            if self._devices[ip]['timestamp'] == message['timestamp']:
                                                 print("skipnuty rovnaky timestamp")
                                                 continue
-                                            self._devices[ip]['last_ping'] = int(time.time())
+                                            self._devices[ip]['timestamp'] = int(time.time())
                                             print("zmeneny timestamp")
                                         else:
                                             self._devices[ip] = {
                                                 'nick': message['nick'],
                                                 'uuid': message['uuid'],
-                                                'last_ping': int(time.time()),
+                                                'timestamp': int(time.time()),
+                                                'last_ping': int(time.time())-message['timestamp'],
                                             }
-                                            # TODO toto potom treba presunut za except
-                                            self.on_new_discovery(self._devices)
                                             print("pridane zar")
                                     print(f"sprava prijata: {message}")
                                     previous_device = current_time
                         except (socket.timeout, json.JSONDecodeError):
                             continue
+                        self.on_new_discovery(self._devices)
+                    with self._devices_lock:
+                        for ip in self._devices:
+                            last = int(time.time()) - self._devices[ip]['timestamp']
+                            if last < 0:
+                                last = 0
+                            self._devices[ip]['last_ping'] = last
 
                 if self._nic >= 6:
                     # mozno toto vyuzijeme, ked po dlhsom discovery sa nikto neobjavi
@@ -313,7 +314,7 @@ class Networking:
                 if current_time - previous_del > 15:
                     previous_del = current_time
                     with self._devices_lock:
-                        old_ips = [ip for ip, info in self._devices.items() if current_time - info['last_ping'] > 15]
+                        old_ips = [ip for ip, info in self._devices.items() if current_time - info['timestamp'] > 15]
                         for ip in old_ips:
                             del self._devices[ip]
                             print(f'vymazana stara ip: {ip}')
@@ -421,28 +422,31 @@ class Networking:
 
     # Poslanie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 poslat pozvanku, 1 potvrdzujem poznamku, 2 odmietnuta pozvanka
     def game_accept(self, target_address, x_size=7, y_size=6, max_wins=3, accept=0):
-        if '.' not in target_address:
-            for ip, info in self._devices.items():
-                if info['uuid'] == target_address:
-                    target_address = ip
-                    break
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as accept_sock:
-            accept_sock.connect((target_address, PORT))
-            if accept == 0:
-                confirm = 'confirm'
-                self.set_game_settings(x_size, y_size, max_wins)
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
-                           'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
-            elif accept == 1:
-                confirm = 'confirmed'
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
-                           'confirm': confirm}
-            else:
-                confirm = 'rejected'
-                self.set_game_settings(x_size, y_size, max_wins)
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
-                           'confirm': confirm}
-            send_message(message, accept_sock)
+        try:
+            if '.' not in target_address:
+                for ip, info in self._devices.items():
+                    if info['uuid'] == target_address:
+                        target_address = ip
+                        break
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as accept_sock:
+                accept_sock.connect((target_address, PORT))
+                if accept == 0:
+                    confirm = 'confirm'
+                    self.set_game_settings(x_size, y_size, max_wins)
+                    message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                               'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
+                elif accept == 1:
+                    confirm = 'confirmed'
+                    message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                               'confirm': confirm}
+                else:
+                    confirm = 'rejected'
+                    self.set_game_settings(x_size, y_size, max_wins)
+                    message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                               'confirm': confirm}
+                send_message(message, accept_sock)
+        except (socket.error, ConnectionRefusedError):
+            raise Exception("Pozvanku sa nepodarilo odoslat.")
 
     def send_move(self, x):
         message = {'app': 'connect43sa', 'type': 'move', 'uuid': self._uuid, 'x': x}

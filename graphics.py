@@ -366,6 +366,7 @@ class Graphics:
 
         font_main = pygame.font.SysFont("Arial", 20)
         font_small = pygame.font.SysFont("Arial", 14)
+        font_mini = pygame.font.SysFont("Arial", 9)
 
         block_width = 500
         block_height = 60
@@ -383,9 +384,6 @@ class Graphics:
             lastOnlines = []
 
             invite_rect = []
-
-            empty_text = 'Vyhľadávam hráčov...'
-
             for player in players:
                 nicks.append(player[0])
                 uuids.append(player[1])
@@ -394,7 +392,7 @@ class Graphics:
             for i in range(len(uuids)):
                 nick = nicks[i] if i < len(nicks) else ""
                 uuid = uuids[i]
-                last = lastOnlines[i] + "s ago"
+                last = str(lastOnlines[i]) + "s ago"
 
                 y = start_y + i * (block_height + margin)
 
@@ -403,7 +401,7 @@ class Graphics:
 
                 # Draw "Nick", UUID, Last Online
                 nick_text = font_main.render(nick, True, (255, 255, 255))
-                uuid_text = font_small.render(uuid, True, (200, 200, 200))
+                uuid_text = font_mini.render(uuid, True, (200, 200, 200))
                 last_text = font_main.render(last, True, (180, 180, 180))
 
                 self.screen.blit(nick_text, (block_x + 10, y + 5))
@@ -415,9 +413,9 @@ class Graphics:
                 pygame.draw.rect(self.screen, (100, 150, 250), invite_rect[i][0], border_radius=5)
                 invite_text = font_main.render("Invite", True, (0, 0, 0))
                 self.screen.blit(invite_text, (invite_rect[i][0].x + 10, invite_rect[i][0].y + 5))
-
+            self.draw_text_centered('Vyhľadávam hráčov...', 50)
             pygame.display.update()
-            return  invite_rect
+            return invite_rect
         else:
             self.draw_text_centered('Vyhľadávam hráčov...', 50)
             self.leave_button()
@@ -514,46 +512,47 @@ class Graphics:
 
     def draw_notifications(self, surface, typ='info', uuid=None):
         now = pygame.time.get_ticks()
-        for i, notif in enumerate(self.notifications[:]):
-            elapsed = now - notif["start_time"]
-            if elapsed > self.NOTIF_DURATION and notif['type'] == 'info':
-                self.notifications.remove(notif)
-                continue
-            if elapsed > self.NOTIF_DURATION * 10 and notif['type'] == 'invite':
-                self.notifications.remove(notif)
-                continue
+        if len(self.notifications) > 0:
+            for i, notif in enumerate(self.notifications[:]):
+                elapsed = now - notif["start_time"]
+                if elapsed > self.NOTIF_DURATION and notif['type'] == 'info':
+                    self.notifications.remove(notif)
+                    continue
+                if elapsed > self.NOTIF_DURATION * 10 and notif['type'] == 'invite':
+                    self.notifications.remove(notif)
+                    continue
 
-            # Position (bottom right corner)
-            x = surface.get_width() - self.NOTIF_WIDTH - self.MARGIN
-            y = surface.get_height() - (self.NOTIF_HEIGHT + self.MARGIN) * (i + 1)
+                # Position (bottom right corner)
+                x = surface.get_width() - self.NOTIF_WIDTH - self.MARGIN
+                y = surface.get_height() - (self.NOTIF_HEIGHT + self.MARGIN) * (i + 1)
 
-            height = self.NOTIF_HEIGHT
-            color = self.NOTIF_COLOR_INFO
-            if notif['type'] == 'invite':
-                height = self.NOTIF_HEIGHT * 2
-                color = self.NOTIF_COLOR_INV
+                height = self.NOTIF_HEIGHT
+                color = self.NOTIF_COLOR_INFO
+                if notif['type'] == 'invite':
+                    height = self.NOTIF_HEIGHT * 2
+                    color = self.NOTIF_COLOR_INV
 
-            # Draw background
-            notif_rect = pygame.Rect(x, y, self.NOTIF_WIDTH, height)
-            pygame.draw.rect(surface, color, notif_rect, border_radius=8)
-            pygame.draw.rect(surface, (200, 200, 200), notif_rect, 2, border_radius=8)
+                # Draw background
+                notif_rect = pygame.Rect(x, y, self.NOTIF_WIDTH, height)
+                pygame.draw.rect(surface, color, notif_rect, border_radius=8)
+                pygame.draw.rect(surface, (200, 200, 200), notif_rect, 2, border_radius=8)
 
-            # Render text
-            text_surf = self.not_font.render(notif["text"], True, (255, 255, 255))
-            surface.blit(text_surf, (x + 10, y + 10))
+                # Render text
+                text_surf = self.not_font.render(notif["text"], True, (255, 255, 255))
+                surface.blit(text_surf, (x + 10, y + 10))
 
 
-            if notif['type'] == 'invite':
-                accept_rect = pygame.Rect(x + 10, y + height - 40, self.NOTIF_WIDTH // 2 - 15, 30)
-                pygame.draw.rect(surface, (50, 150, 50), accept_rect, border_radius=5)
-                accept_text = self.not_font.render("Prijať", True, (255, 255, 255))
-                surface.blit(accept_text, (accept_rect.x + 10, accept_rect.y + 5))
+                if notif['type'] == 'invite':
+                    accept_rect = pygame.Rect(x + 10, y + height - 40, self.NOTIF_WIDTH // 2 - 15, 30)
+                    pygame.draw.rect(surface, (50, 150, 50), accept_rect, border_radius=5)
+                    accept_text = self.not_font.render("Prijať", True, (255, 255, 255))
+                    surface.blit(accept_text, (accept_rect.x + 10, accept_rect.y + 5))
 
-                reject_rect = pygame.Rect(x + self.NOTIF_WIDTH // 2 + 5, y + height - 40, self.NOTIF_WIDTH //2 - 15, 30)
-                pygame.draw.rect(surface, (150, 50, 50), reject_rect, border_radius=5)
-                surface.blit(reject_rect, (reject_rect.x + 10, reject_rect.y + 5))
-                notif["accept_rect"] = accept_rect
-                notif["reject_rect"] = reject_rect
+                    reject_rect = pygame.Rect(x + self.NOTIF_WIDTH // 2 + 5, y + height - 40, self.NOTIF_WIDTH //2 - 15, 30)
+                    pygame.draw.rect(surface, (150, 50, 50), reject_rect, border_radius=5)
+                    surface.blit(reject_rect, (reject_rect.x + 10, reject_rect.y + 5))
+                    notif["accept_rect"] = accept_rect
+                    notif["reject_rect"] = reject_rect
 
     def handle_notif_clicks(self, pos):
         for notif in self.notifications[:]:
