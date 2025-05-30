@@ -141,6 +141,8 @@ class LogikaHry:
             self.gra.clock.tick(60)
             self.clock.tick(60)
 
+            if self.state != "discovery" and self.net.get_discovering():
+                self.net.stop_discovery()
             if self.state == "main_menu":
                 buttons = self.gra.show_main_menu()
             elif self.state == "play_menu":
@@ -152,6 +154,8 @@ class LogikaHry:
             elif self.state == "menu":
                 buttons = self.gra.menu_window()
             elif self.state == "discovery":
+                if not self.net.get_discovering():
+                    self.net.start_discovery()
                 buttons = self.gra.show_network(self.players)
             elif self.state == "game":
                 leave_button = self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
@@ -208,25 +212,12 @@ class LogikaHry:
 
                     elif self.state == "discovery":
                         if self.gra.leave_button().collidepoint(event.pos):
-                            self.stop_mult()
                             self.state = "main_menu"
-                        #else:
-                            # Kontrola kliknutí na invite tlačidlá (index 1 a vyššie)
-                            #for button in buttons[1:]:
-                                #if button[0].collidepoint(event.pos):  # button[0] je Rect objekt tlačidla
-                                    #player_uuid = button[1]  # button[1] je UUID hráča
-                                    #print(f"Sending invite to player with UUID: {player_uuid}")
-                                    # Tu môžete implementovať odoslanie pozvánky danému hráčovi
-                                    #self.send_invite(player_uuid)
-                        elif buttons[1].collidepoint(event.pos):
-                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
-                                                 self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
-                            self.restartHru()
-                            self.state = "game"
-                            self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
-                                                self.skore_zlty.get_celkove_skore(),
-                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                        else:
+                            for button in buttons:
+                                if button[0].collidepoint(event.pos):
+                                    self.send_invite(button[1])
+                                    self.gra.show_notification("Bola odoslaná pozvánka.")
 
                     elif self.state == "about":
                         self.state = "main_menu"
@@ -421,5 +412,8 @@ class LogikaHry:
 
 
 if __name__ == "__main__":
-    hra = LogikaHry(2)
-    hra.run()
+    try:
+        hra = LogikaHry(2)
+        hra.run()
+    except KeyboardInterrupt:
+        sys.exit(130)

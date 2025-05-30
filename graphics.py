@@ -142,7 +142,7 @@ class Graphics:
 
             self.draw_notifications(self.screen)
             pygame.display.flip()
-            pygame.time.delay(3)  # Zastaví na 10 ms pre efekt pádu.
+            pygame.time.delay(5)  # Zastaví na 5 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
@@ -603,7 +603,6 @@ class Graphics:
 
             if token["y"] > self.HEIGHT + 40:
                 self.animated_tokens.remove(token)
-
 
     def create_vertical_gradient_surface(self, width, height, top_color, bottom_color, darkness_factor=0.7):
         surface = pygame.Surface((width, height))
