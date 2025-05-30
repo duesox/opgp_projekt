@@ -151,6 +151,7 @@ class LogikaHry:
 
             if self.state != "discovery" and self.net.get_discovering():
                 self.net.stop_discovery()
+                self.net.stop_tcp_listen()
             if self.state == "main_menu":
                 buttons = self.gra.show_main_menu()
             elif self.state == "play_menu":
@@ -221,6 +222,7 @@ class LogikaHry:
                     elif self.state == "discovery":
                         if self.gra.leave_button().collidepoint(event.pos):
                             self.state = "main_menu"
+                            self.stop_mult()
                         else:
                             for button in buttons:
                                 if button[0].collidepoint(event.pos):
@@ -416,7 +418,12 @@ class LogikaHry:
         self.mult_color = 1 if self.hrac == 0 else 0
 
     def send_invite(self, uuid):
-        self.net.game_accept(uuid)
+        def _thread_invite():
+            try:
+                self.net.game_accept(uuid)
+            except Exception as e:
+                self.gra.show_notification(e)
+        threading.Thread(target=_thread_invite, daemon=True).start()
         self.player_color = 0
 
     # asi toto skipneme

@@ -420,28 +420,31 @@ class Networking:
 
     # Poslanie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 poslat pozvanku, 1 potvrdzujem poznamku, 2 odmietnuta pozvanka
     def game_accept(self, target_address, x_size=7, y_size=6, max_wins=3, accept=0):
-        if '.' not in target_address:
-            for ip, info in self._devices.items():
-                if info['uuid'] == target_address:
-                    target_address = ip
-                    break
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as accept_sock:
-            accept_sock.connect((target_address, PORT))
-            if accept == 0:
-                confirm = 'confirm'
-                self.set_game_settings(x_size, y_size, max_wins)
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
-                           'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
-            elif accept == 1:
-                confirm = 'confirmed'
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
-                           'confirm': confirm}
-            else:
-                confirm = 'rejected'
-                self.set_game_settings(x_size, y_size, max_wins)
-                message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
-                           'confirm': confirm}
-            send_message(message, accept_sock)
+        try:
+            if '.' not in target_address:
+                for ip, info in self._devices.items():
+                    if info['uuid'] == target_address:
+                        target_address = ip
+                        break
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as accept_sock:
+                accept_sock.connect((target_address, PORT))
+                if accept == 0:
+                    confirm = 'confirm'
+                    self.set_game_settings(x_size, y_size, max_wins)
+                    message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                               'confirm': confirm, 'x_size': x_size, 'y_size': y_size, 'max_wins': max_wins}
+                elif accept == 1:
+                    confirm = 'confirmed'
+                    message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                               'confirm': confirm}
+                else:
+                    confirm = 'rejected'
+                    self.set_game_settings(x_size, y_size, max_wins)
+                    message = {'app': 'connect43sa', 'type': 'accept', 'uuid': self._uuid, 'ip': self._self_address,
+                               'confirm': confirm}
+                send_message(message, accept_sock)
+        except (socket.error, ConnectionRefusedError) as e:
+            raise "Pozvanku sa nepodarilo odoslat."
 
     def send_move(self, x):
         message = {'app': 'connect43sa', 'type': 'move', 'uuid': self._uuid, 'x': x}
