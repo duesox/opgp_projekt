@@ -412,5 +412,8 @@ class LogikaHry:
 
 
 if __name__ == "__main__":
-    hra = LogikaHry(2)
-    hra.run()
+    try:
+        hra = LogikaHry(2)
+        hra.run()
+    except KeyboardInterrupt:
+        sys.exit(130)

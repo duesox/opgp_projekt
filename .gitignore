@@ -5,3 +5,4 @@ __pycache__/skore.cpython-312.pyc
 /.idea
 __pycache__/prepojenie.cpython-312.pyc
 *.py~
+/build

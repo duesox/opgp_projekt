@@ -223,7 +223,7 @@ class Networking:
 
 # tu je chyba
     def discovery_loop(self):
-        with not self._stop_event.is_set():
+        while not self._stop_event.is_set():
             previous_send_recv = 0
             previous_del = 0
             recvs = {}
