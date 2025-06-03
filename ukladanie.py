@@ -38,7 +38,7 @@ class Saving:
                 self._nick = "user_"+self._uuid[:6]
                 udaje[1] = self._nick
                 self.encrypt_and_save(udaje)
-        print(udaje)
+            #print(udaje)
 
     def encrypt_and_save(self, data):
         fernet = Fernet(KEY)

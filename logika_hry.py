@@ -1,3 +1,5 @@
+import time
+
 import graphics as gr
 import pygame
 import sys
@@ -40,24 +42,24 @@ class LogikaHry:
 
         # network callbacky
         self.net.on_move_recieved = self.recv_move
-        self.net.on_settings_changed = self.recv_sett
         self.net.on_game_invite = self.recv_inv
         self.net.on_game_invite_rejected = self.recv_inv_rej
-        # start stop multiplayer hry
-        self.start_mult = self.net.on_connect
-        self.stop_mult = self.net.on_disconnect
+        # TODO implementovat start stop multiplayer hry
         # updatenuty list hracov
         self.net.on_new_discovery = self.discovery_update
         # dlho nenajdeni hraci
         self.net.no_devices_found = self.no_players
-        # TODO implementovat otazku a reakciu na restart a retry
-        """
-        self.net.on_request_restart = self.restart_ask
-        self.net.on_request_retry = self.retry_ask
-        self.net.on_game_restart = self.restart_mult
-        self.net.on_game_retry = self.retry_mult
-        """
 
+        # zapnutie servera
+        self.net.on_connect = self.start_server
+        # po tuknuti na invite notifikaciu
+        self.gra.accept_invite = self.inv_react
+        self.gra.reject_invite = self.inv_react
+
+        self.net.on_disconnect = self.opp_stop_mult
+
+        # spustenie online hry
+        self.net.on_online_game_start = self.online_game
 
         self.mult_game = False
         self.mult_color = 0  # 0 - cervena, 1 zlta
@@ -100,8 +102,8 @@ class LogikaHry:
             self.zoznam_policok[riadok][stlpec] = LogikaHry.ZLTA
         self.vyhodnotHru()
 
-    def kliknutie(self, x_pozicia, protihrac=False):
-        if not self.mult_game or (self.mult_game and self.player_color == self.mult_color):
+    def kliknutie(self, x_pozicia, protihrac=False, stlpec=0):
+        if not self.mult_game:
             """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
 
             # Určí šírku hracej plochy
@@ -119,8 +121,23 @@ class LogikaHry:
                                           self.skore_cerveny.max_skore())
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 2 if self.hrac == 1 else 1
-        elif self.mult_game and not protihrac:
-            stlpec = x_pozicia
+        elif self.mult_game and not protihrac and self.hrac == self.mult_color:
+            sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+            offset = 250  # Posun hracej plochy doprava o 250 px
+
+            # Skontroluje, či kliknutie je v rámci hracej plochy
+            if offset <= x_pozicia <= offset + sirka_hracej_plochy:
+                stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+                volny_riadok = self.prazdnyRiadok(stlpec)
+
+                if volny_riadok is not None:
+                    self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
+                                          self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
+                                          self.skore_cerveny.max_skore())
+                    self.nastavHod(volny_riadok, stlpec, self.hrac)
+                    self.hrac = 1 if self.hrac == 2 else 2
+                    self.net.send_move(stlpec)
+        elif self.mult_game and protihrac and self.hrac != self.mult_color:
             volny_riadok = self.prazdnyRiadok(stlpec)
             if volny_riadok is not None:
                 self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
@@ -128,7 +145,6 @@ class LogikaHry:
                                       self.skore_cerveny.max_skore())
                 self.nastavHod(volny_riadok, stlpec, self.hrac)
                 self.hrac = 2 if self.hrac == 1 else 1
-                self.net.send_move(stlpec)
 
     def prazdnyRiadok(self, stlpec):
         """Vráti prvý voľný riadok v danom stĺpci, alebo None ak je plný."""
@@ -150,7 +166,6 @@ class LogikaHry:
 
             if self.state != "discovery" and self.net.get_discovering():
                 self.net.stop_discovery()
-                self.net.stop_tcp_listen()
             if self.state == "main_menu":
                 buttons = self.gra.show_main_menu()
             elif self.state == "play_menu":
@@ -212,9 +227,12 @@ class LogikaHry:
                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
 
                         elif buttons[1].collidepoint(event.pos):
-                            self.state = "discovery"
-                            self.start_mult()
-                            self.gra.set_empty_text('Vyhľadávam hráčov...')
+                            try:
+                                self.state = "discovery"
+                                self.gra.set_empty_text('Vyhľadávam hráčov...')
+                            except ZeroDivisionError:
+                                self.state = "main_menu"
+                                self.gra.show_notification("Nemáte žiadne internetové rozhrania.")
                         elif self.gra.leave_button().collidepoint(event.pos):
                             self.state = "main_menu"
 
@@ -222,15 +240,15 @@ class LogikaHry:
                         if self.gra.leave_button().collidepoint(event.pos):
                             self.gra.draw_text_centered("Ukončujem vyhľadávanie", 50)
                             self.state = "main_menu"
-                            self.stop_mult()
                         else:
-                            try:
-                                for button in buttons:
-                                    if button[0].collidepoint(event.pos):
+                            for button in buttons:
+                                if button[0].collidepoint(event.pos):
+                                    try:
                                         self.send_invite(button[1])
                                         self.gra.show_notification("Bola odoslaná pozvánka.")
-                            except None:
-                                pass
+                                    except Exception:
+                                        pass
+                                    break
 
                     elif self.state == "about":
                         self.state = "main_menu"
@@ -238,12 +256,10 @@ class LogikaHry:
                     elif self.state == "game":
                         # Kontrola kliknutia na tlačidlo Leave
                         if self.gra.leave_button().collidepoint(event.pos):
-                           """ self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
-                                                 self.skore_zlty.get_celkove_skore(),
-                                              self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
-                            self.obnovHru()
-                            self.state = "main_menu"""
-                           self.state = "menu"
+                            if self.mult_game:
+                                self.state = "confirm_leave_mult"
+                            else:
+                                self.state = "menu"
                         else:
                             # Inak spracuj kliknutie na hraciu plochu
                             self.kliknutie(event.pos[0])
@@ -253,6 +269,19 @@ class LogikaHry:
                             self.running = False  # Ukončí hru
                         elif button_no.collidepoint(event.pos):
                             self.state = "main_menu"
+                    elif self.state == "confirm_leave_mult":
+                        button_no, button_yes = self.gra.exit_window(text="Chcete opustiť online hru?", main=False)
+                        if button_yes.collidepoint(event.pos):
+                            self.net.send_disconnect()
+                            self.stop_mult()
+                            self.obnovHru()
+                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                 self.skore_zlty.get_celkove_skore(),
+                                                 self.skore_cerveny.get_celkove_skore(),
+                                                 self.skore_cerveny.max_skore(), self.hrac)
+                            self.state = "main_menu"
+                        elif button_no.collidepoint(event.pos):
+                            self.state = "game"
 
                     elif self.state == "menu":
                         button_main_menu, button_obnov, button_restart = self.gra.menu_window()
@@ -272,9 +301,9 @@ class LogikaHry:
                             self.state = "game"
                         else:
                             self.state = "game"
-
-            self.gra.draw_notifications(self.gra.screen)
-            pygame.display.flip()
+            if not self.gra.animuje:
+                self.gra.draw_notifications(self.gra.screen)
+                pygame.display.flip()
 
         pygame.quit()
         sys.exit()
@@ -381,7 +410,6 @@ class LogikaHry:
         self.net.start_discovery()
 
     def discovery_update(self, devices):
-        print("nazdar")
         self.players = []
         print(devices)
         if len(devices) > 0:
@@ -393,32 +421,42 @@ class LogikaHry:
 
     def recv_inv(self, nick, uuid):  # mozno tu este max_wins
         # zobrazit upozornenie a moznosti hej a ne
+        print(f'dosiel inv {nick}: {uuid}')
         self.gra.receive_invite(nick, uuid)
 
     def recv_inv_rej(self):
         # zobrazit upozornenie, ze pozvanka bola odmietnuta
         self.gra.show_notification("Pozvánka bola odmietnutá.")
 
-    def inv_react(self, uuid, reaction: bool):
+    def inv_react(self, uuid, reaction):
         if reaction:
-            self.net.connect_to_client(uuid, 0)
-            self.player_color = 1
+            self.net.game_accept(uuid, accept=1)
         else:
             self.net.game_accept(uuid, accept=2)
 
-    def start_mult(self):
-        self.net.start_tcp_listen()
+    def start_server(self, uuid):
+        nick = "hráčom"
+        self.mult_game = True
+        self.net.start_tcp_listen(uuid)
+        time.sleep(1.5)
+        for player in self.players:
+            if player[1] == uuid:
+                nick = player[0]
+        self.gra.show_notification(f"Spájam s {nick}...")
+        self.net.game_accept(uuid, accept=3)
 
     def stop_mult(self):
+        self.state = "menu"
         self.net.stop_tcp_listen()
+        self.mult_game = False
 
-    def no_players(self, time):
-        self.gra.set_empty_text(f'Už {time}s sa nenašli hráči.')
+    def no_players(self, cas):
+        self.gra.show_notification(f'Už {cas}s sa nenašli hráči.')
 
     def recv_move(self, x):
         # spracovanie a ukazanie tahu protihraca
-        self.kliknutie(x, True)
-        self.mult_color = 1 if self.hrac == 0 else 0
+        self.kliknutie(x, True, stlpec=x)
+        self.hrac = self.mult_color
 
     def send_invite(self, uuid):
         def _thread_invite():
@@ -428,11 +466,22 @@ class LogikaHry:
                 print(e)
                 self.gra.show_notification(str(e))
         threading.Thread(target=_thread_invite, daemon=True).start()
-        self.player_color = 0
 
-    # asi toto skipneme
-    def recv_sett(self):
-        pass
+    def online_game(self, zacinajuci):
+        self.mult_game = True
+        self.state = "game"
+        if zacinajuci:
+            self.mult_color = 1
+        else:
+            self.mult_color = 2
+        self.hrac = 1
+
+    def opp_stop_mult(self):
+        self.gra.show_notification("Hráč nebol aktívny. Hra ukončená")
+        self.state = "main_menu"
+        self.mult_game = False
+
+
 
 
 if __name__ == "__main__":
