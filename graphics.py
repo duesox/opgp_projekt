@@ -1,3 +1,5 @@
+import threading
+
 import pygame
 import random
 
@@ -26,7 +28,7 @@ class Graphics:
 
         self.font = pygame.font.SysFont("Arial", 80, bold=True)
         self.small_font = pygame.font.SysFont("Arial", 50, bold=True)
-        self.not_font = pygame.font.SysFont("Arial", 20,bold=True)
+        self.not_font = pygame.font.SysFont("Arial", 20, bold=True)
         self.rows = rows  # Nastaví počet riadkov na doske.
         self.cols = cols  # Nastaví počet stĺpcov na doske.
         width = cols * self.CELL_SIZE  # Šírka obrazovky (šírka všetkých stĺpcov).
@@ -51,6 +53,11 @@ class Graphics:
         self.empty_text = ''
 
         self.notifications = []
+
+        self.accept_invite = lambda uuid, react: None
+        self.reject_invite = lambda uuid, react: None
+
+        self.animuje = False
 
     def draw_text_centered(self, text, y, size=40):
         font = pygame.font.SysFont("Arial", size, bold=True)
@@ -129,6 +136,8 @@ class Graphics:
         self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player)
 
     def animate_fall(self, col, row, current_player, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore):
+        # TODO toto treba poriesit, aby to fungovalo
+        #self.animuje = True
         # X pozícia, kde bude žetón spadávať (stĺpec * veľkosť bunky + polovičná veľkosť).
         x = col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250
         # Počiatočná Y pozícia (na začiatku nad doskou).
@@ -140,13 +149,13 @@ class Graphics:
             self.draw_board(vyhry_zlty,vyhry_cerveny,skore_zlty,skore_cerveny,skore, current_player)
             pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
 
-            self.draw_notifications(self.screen)
             pygame.display.flip()
             pygame.time.delay(5)  # Zastaví na 5 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
         self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player)  # Vykreslí dosku po páde žetónu.
+        self.animuje = False
 
 
     def current_player(self,player):
@@ -196,12 +205,14 @@ class Graphics:
     def draw_animation(self):
 
         running = True
+        self.animuje = True
         while running:
             self.clock.tick(60)
             self.draw_animated_background()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     running = False
+                    self.animuje = False
             text = self.font.render("Remíza!", True, (32, 32, 32))
             text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
             self.screen.blit(text, text_rect)
@@ -225,8 +236,9 @@ class Graphics:
         self.leave_button()
 
         return local_rect, online_rect
-    def exit_window(self,widht=400,height=200,):
-        self.show_main_menu()
+    def exit_window(self,widht=400,height=200,text="Are you sure you want to exit?", main=True):
+        if main:
+            self.show_main_menu()
 
         x=self.WIDTH//2-widht//2
         y=self.HEIGHT//2-height//2
@@ -237,7 +249,7 @@ class Graphics:
 
         exit_font = pygame.font.SysFont("Arial", 30, bold=True)
 
-        text_surface = exit_font.render("Are you sure you want to exit?", True, (32, 32, 32))
+        text_surface = exit_font.render(text, True, (32, 32, 32))
         text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y+20))
         self.screen.blit(text_surface, text_rect)
 
@@ -419,6 +431,7 @@ class Graphics:
         else:
             self.draw_text_centered('Vyhľadávam hráčov...', 50)
             self.leave_button()
+            return []
 
 
     def show_about(self):
@@ -468,9 +481,6 @@ class Graphics:
         self.screen.blit(zlty_text, (x_pos, y_pos_max+240))
         self.screen.blit(zlty_skore, (x_pos, y_pos_max+290))
 
-    def player_list_update(self, devices):
-        pass
-
     def draw_title(self, surface):
         font = pygame.font.SysFont("arialblack", 70, bold=True)
         text = "CONNECT 4"
@@ -513,63 +523,79 @@ class Graphics:
     def draw_notifications(self, surface, typ='info', uuid=None):
         now = pygame.time.get_ticks()
         if len(self.notifications) > 0:
-            for i, notif in enumerate(self.notifications[:]):
+            total_height = 0
+            notifs_to_draw = []
+            for notif in self.notifications[:]:
                 elapsed = now - notif["start_time"]
-                if elapsed > self.NOTIF_DURATION and notif['type'] == 'info':
+                if notif["type"] == "info" and elapsed > self.NOTIF_DURATION:
                     self.notifications.remove(notif)
                     continue
-                if elapsed > self.NOTIF_DURATION * 10 and notif['type'] == 'invite':
+                if notif["type"] == "invite" and elapsed > self.NOTIF_DURATION * 10:
                     self.notifications.remove(notif)
                     continue
-
-                # Position (bottom right corner)
-                x = surface.get_width() - self.NOTIF_WIDTH - self.MARGIN
-                y = surface.get_height() - (self.NOTIF_HEIGHT + self.MARGIN) * (i + 1)
 
                 height = self.NOTIF_HEIGHT
-                color = self.NOTIF_COLOR_INFO
-                if notif['type'] == 'invite':
-                    height = self.NOTIF_HEIGHT * 2
-                    color = self.NOTIF_COLOR_INV
+                if notif["type"] == "invite":
+                    height = self.NOTIF_HEIGHT * 2 + 20  # +20 pre bezpečný rozostup
 
-                # Draw background
+                total_height += height + self.MARGIN
+                notifs_to_draw.append((notif, height))
+
+                # Kreslenie
+            y = surface.get_height() - total_height
+            for notif, height in notifs_to_draw:
+                x = surface.get_width() - self.NOTIF_WIDTH - self.MARGIN
+                color = self.NOTIF_COLOR_INFO if notif["type"] != "invite" else self.NOTIF_COLOR_INV
+
+                # Pozadie
                 notif_rect = pygame.Rect(x, y, self.NOTIF_WIDTH, height)
                 pygame.draw.rect(surface, color, notif_rect, border_radius=8)
                 pygame.draw.rect(surface, (200, 200, 200), notif_rect, 2, border_radius=8)
 
-                # Render text
+                # Text
                 text_surf = self.not_font.render(notif["text"], True, (255, 255, 255))
                 surface.blit(text_surf, (x + 10, y + 10))
 
-
-                if notif['type'] == 'invite':
+                # Ak ide o pozvánku – pridaj tlačidlá
+                if notif["type"] == "invite":
                     accept_rect = pygame.Rect(x + 10, y + height - 40, self.NOTIF_WIDTH // 2 - 15, 30)
                     pygame.draw.rect(surface, (50, 150, 50), accept_rect, border_radius=5)
                     accept_text = self.not_font.render("Prijať", True, (255, 255, 255))
                     surface.blit(accept_text, (accept_rect.x + 10, accept_rect.y + 5))
 
-                    reject_rect = pygame.Rect(x + self.NOTIF_WIDTH // 2 + 5, y + height - 40, self.NOTIF_WIDTH //2 - 15, 30)
+                    reject_rect = pygame.Rect(x + self.NOTIF_WIDTH // 2 + 5, y + height - 40,
+                                              self.NOTIF_WIDTH // 2 - 15, 30)
                     pygame.draw.rect(surface, (150, 50, 50), reject_rect, border_radius=5)
-                    surface.blit(reject_rect, (reject_rect.x + 10, reject_rect.y + 5))
+                    reject_text = self.not_font.render("Odmietnuť", True, (255, 255, 255))
+                    surface.blit(reject_text, (reject_rect.x + 10, reject_rect.y + 5))
+
                     notif["accept_rect"] = accept_rect
                     notif["reject_rect"] = reject_rect
+
+                y += height + self.MARGIN
+
 
     def handle_notif_clicks(self, pos):
         for notif in self.notifications[:]:
             if notif['type'] == 'invite' and "accept_rect" in notif:
                 if notif["accept_rect"].collidepoint(pos):
-                    self.accept_invite(notif["uuid"])
+                    threading.Thread(target=self.accept_invite, args=(notif["uuid"],True,), daemon=True).start()
                     self.notifications.remove(notif)
                     return True
                 if notif["reject_rect"].collidepoint(pos):
-                    self.reject_invite(notif["uuid"])
+                    threading.Thread(target=self.accept_invite, args=(notif["uuid"], False,), daemon=True).start()
+                    self.reject_invite(notif["uuid"], False)
                     self.notifications.remove(notif)
                     return True
         return False
 
     def receive_invite(self, nick, uuid):
         message = f"Pozvánka od hráča: {nick}"
-        self.show_notification(message, typ='invite', uuid=uuid)
+        for notif in self.notifications[:]:
+            if notif["type"] == "invite" and notif["uuid"] == uuid:
+                continue
+        else:
+            self.show_notification(message, typ='invite', uuid=uuid)
 
     def draw_animated_background(self):
         # Inicializácia stavových premenných pri prvom použití

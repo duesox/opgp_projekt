@@ -6,3 +6,6 @@ __pycache__/skore.cpython-312.pyc
 __pycache__/prepojenie.cpython-312.pyc
 *.py~
 /build
+dist/Connect4.exe
+*.pyc
+__pycache__/ukladanie.cpython-312.pyc
