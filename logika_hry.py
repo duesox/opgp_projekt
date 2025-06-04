@@ -195,7 +195,11 @@ class LogikaHry:
                         continue
                     if self.state == "main_menu":
 
-
+                        self.obnovHru()
+                        self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                            self.skore_zlty.get_celkove_skore(),
+                                            self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),
+                                            self.hrac)
                         if buttons[0].collidepoint(event.pos):
                             self.state = "play_menu"
 

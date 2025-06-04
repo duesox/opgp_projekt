@@ -12,8 +12,7 @@ class Graphics:
     NOTIF_COLOR_INFO = (30, 30, 30)
     NOTIF_COLOR_INV = (30, 30, 80)
     NOTIF_COLOR_BORDER = (200, 200, 200)
-    PLAYER_COLORS = [(255, 255,0), (255, 0, 0)]
-
+    PLAYER_COLORS = [(255, 255, 0), (255, 0, 0)]
 
     def set_empty_text(self, text):
         self.empty_text = text
@@ -48,7 +47,8 @@ class Graphics:
         self.big_font = pygame.font.SysFont("Arial", 60, bold=True)
         self.board = [[0 for _ in range(cols)] for _ in range(rows)]
         self.running = True
-        self.background_gradient = self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255), (130, 130, 255),0.95)
+        self.background_gradient = self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT, (30, 30, 255),
+                                                                         (130, 130, 255), 0.95)
 
         self.empty_text = ''
 
@@ -86,9 +86,9 @@ class Graphics:
 
         return button_rect
 
-    def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player):
-        self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255),
-                                                               (130, 130, 255),0.8), (0, 0))
+    def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player):
+        self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT, (30, 30, 255),
+                                                               (130, 130, 255), 0.8), (0, 0))
 
         # Najprv zobraz skóre
         self.zobraz_skore(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore)
@@ -106,17 +106,12 @@ class Graphics:
         self.draw_title(self.screen)
         self.current_player(current_player)
 
-
-
-
         self.leave_button()
-
 
     def leave_button(self):
         leave_button = pygame.Rect(50, 610, 80, 80)
         pygame.draw.rect(self.screen, (255, 255, 0), leave_button, border_radius=40)
         pygame.draw.rect(self.screen, (255, 0, 0), leave_button, border_radius=40, width=10)
-
 
         # Vycentrovaný text v tlačidle
         leave_txt = self.not_font.render("Menu", True, (0, 0, 0))
@@ -125,11 +120,6 @@ class Graphics:
 
         return leave_button
 
-
-
-
-
-
     def clear_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
 
@@ -137,7 +127,7 @@ class Graphics:
 
     def animate_fall(self, col, row, current_player, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore):
         # TODO toto treba poriesit, aby to fungovalo
-        #self.animuje = True
+        # self.animuje = True
         # X pozícia, kde bude žetón spadávať (stĺpec * veľkosť bunky + polovičná veľkosť).
         x = col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250
         # Počiatočná Y pozícia (na začiatku nad doskou).
@@ -146,26 +136,23 @@ class Graphics:
 
         # Animácia pádu (posúvanie žetónu po Y osi).
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
-            self.draw_board(vyhry_zlty,vyhry_cerveny,skore_zlty,skore_cerveny,skore, current_player)
-            pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y), self.RADIUS)  # Vykreslí žetón na novej pozícii.
+            self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player)
+            pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y),
+                               self.RADIUS)  # Vykreslí žetón na novej pozícii.
 
             pygame.display.flip()
             pygame.time.delay(5)  # Zastaví na 5 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
-        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player)  # Vykreslí dosku po páde žetónu.
+        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,
+                        current_player)  # Vykreslí dosku po páde žetónu.
         self.animuje = False
 
-
-    def current_player(self,player):
+    def current_player(self, player):
         x = 90  # left + half width
         y = 90
         pygame.draw.circle(self.screen, self.PLAYER_COLORS[player - 1], (x, y), self.RADIUS)
-
-
-
-
 
     def winAnimation(self, vyherca):
         confetti_list = []
@@ -236,26 +223,27 @@ class Graphics:
         self.leave_button()
 
         return local_rect, online_rect
-    def exit_window(self,widht=400,height=200,text="Are you sure you want to exit?", main=True):
+
+    def exit_window(self, widht=400, height=200, text="Are you sure you want to exit?", main=True):
         if main:
             self.show_main_menu()
 
-        x=self.WIDTH//2-widht//2
-        y=self.HEIGHT//2-height//2
+        x = self.WIDTH // 2 - widht // 2
+        y = self.HEIGHT // 2 - height // 2
 
         exit_rect = pygame.Rect(x, y, widht, height)
-        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x-8, y-8, widht+16, height+16), border_radius=8)
+        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x - 8, y - 8, widht + 16, height + 16), border_radius=8)
         pygame.draw.rect(self.screen, (51, 51, 255), exit_rect, border_radius=8)
 
         exit_font = pygame.font.SysFont("Arial", 30, bold=True)
 
         text_surface = exit_font.render(text, True, (32, 32, 32))
-        text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y+20))
+        text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y + 20))
         self.screen.blit(text_surface, text_rect)
 
-        text= "No"
-        txt =exit_font.render(text, True, (0, 0, 0))
-        text_rect2 = txt.get_rect(center=(self.WIDTH // 2 - 100, y+120))
+        text = "No"
+        txt = exit_font.render(text, True, (0, 0, 0))
+        text_rect2 = txt.get_rect(center=(self.WIDTH // 2 - 100, y + 120))
 
         text2 = "Yes"
         txt2 = exit_font.render(text2, True, (0, 0, 0))
@@ -267,12 +255,12 @@ class Graphics:
             text_rect.left - padding // 2,
             text_rect.top - padding // 2,
             text_rect.width + padding,
-            text_rect.height + padding )
+            text_rect.height + padding)
 
         button_rect2 = pygame.Rect(
             text_rect2.left - padding // 2,
             text_rect2.top - padding // 2,
-            text_rect2.width + padding+10,
+            text_rect2.width + padding + 10,
             text_rect2.height + padding
         )
 
@@ -290,15 +278,15 @@ class Graphics:
         self.screen.blit(txt, text_rect)
         self.screen.blit(txt2, text_rect2)
 
-        return button_rect,button_rect2
+        return button_rect, button_rect2
 
-    def menu_window(self,widht=300,height=450,):
+    def menu_window(self, widht=300, height=450, ):
 
-        x=self.WIDTH//2-widht//2
-        y=self.HEIGHT//2-height//2
+        x = self.WIDTH // 2 - widht // 2
+        y = self.HEIGHT // 2 - height // 2
 
         menu_rect = pygame.Rect(x, y, widht, height)
-        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x-8, y-8, widht+16, height+16), border_radius=8)
+        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x - 8, y - 8, widht + 16, height + 16), border_radius=8)
         pygame.draw.rect(self.screen, (51, 51, 255), menu_rect, border_radius=8)
 
         menu_font = pygame.font.SysFont("Arial", 40, bold=True)
@@ -309,7 +297,7 @@ class Graphics:
 
         text = "Main Menu"
         main_menu_txt = menu_font.render(text, True, (0, 0, 0))
-        main_menu_rect = main_menu_txt.get_rect(center=(self.WIDTH // 2 , y + 100))
+        main_menu_rect = main_menu_txt.get_rect(center=(self.WIDTH // 2, y + 100))
 
         text = "Obnov Hru"
         obnov_txt = menu_font.render(text, True, (0, 0, 0))
@@ -317,7 +305,7 @@ class Graphics:
 
         text = "Reštart Hry"
         restart_txt = menu_font.render(text, True, (0, 0, 0))
-        restart_rect = restart_txt.get_rect(center=(self.WIDTH // 2 , y + 300))
+        restart_rect = restart_txt.get_rect(center=(self.WIDTH // 2, y + 300))
 
         text = "Exit"
         exit_txt = menu_font.render(text, True, (0, 0, 0))
@@ -336,7 +324,6 @@ class Graphics:
             exit_rect.width + padding,
             exit_rect.height + padding)
 
-
         button_obnov_rect = pygame.Rect(
             obnov_rect.left - padding // 2,
             obnov_rect.top - padding // 2,
@@ -349,10 +336,10 @@ class Graphics:
             restart_rect.width + padding,
             restart_rect.height + padding)
 
-        pygame.draw.rect(self.screen, (255, 0, 0), button_main_menu_rect,border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_obnov_rect,border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_restart_rect,border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_exit_rect,border_radius=40)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_main_menu_rect, border_radius=10)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_obnov_rect, border_radius=10)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_restart_rect, border_radius=10)
+        pygame.draw.rect(self.screen, (255, 0, 0), button_exit_rect, border_radius=40)
 
         inner_padding = 9  # hrúbka červeného okraja
 
@@ -369,9 +356,7 @@ class Graphics:
         self.screen.blit(restart_txt, restart_rect)
         self.screen.blit(exit_txt, exit_rect)
 
-        return main_menu_rect,obnov_rect,restart_rect
-
-
+        return main_menu_rect, obnov_rect, restart_rect
 
     def show_network(self, players):
         self.draw_animated_background()
@@ -433,7 +418,6 @@ class Graphics:
             self.leave_button()
             return []
 
-
     def show_about(self):
         self.draw_animated_background()
         lines = [
@@ -446,11 +430,10 @@ class Graphics:
         ]
         y = 170
         for line in lines:
-            text_surface = self.font.render(line, True, (0,0,0))
+            text_surface = self.font.render(line, True, (0, 0, 0))
             text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y))
             self.screen.blit(text_surface, text_rect)
             y += 50
-
 
         self.leave_button()
 
@@ -475,11 +458,11 @@ class Graphics:
 
         self.screen.blit(max_skore_text, (x_pos, y_pos_max))
 
-        self.screen.blit(max_skore, (x_pos, y_pos_max+50))
-        self.screen.blit(cerveny_text, (x_pos, y_pos_max+120))
-        self.screen.blit(cerveny_skore, (x_pos, y_pos_max+170))
-        self.screen.blit(zlty_text, (x_pos, y_pos_max+240))
-        self.screen.blit(zlty_skore, (x_pos, y_pos_max+290))
+        self.screen.blit(max_skore, (x_pos, y_pos_max + 50))
+        self.screen.blit(cerveny_text, (x_pos, y_pos_max + 120))
+        self.screen.blit(cerveny_skore, (x_pos, y_pos_max + 170))
+        self.screen.blit(zlty_text, (x_pos, y_pos_max + 240))
+        self.screen.blit(zlty_skore, (x_pos, y_pos_max + 290))
 
     def draw_title(self, surface):
         font = pygame.font.SysFont("arialblack", 70, bold=True)
@@ -574,12 +557,11 @@ class Graphics:
 
                 y += height + self.MARGIN
 
-
     def handle_notif_clicks(self, pos):
         for notif in self.notifications[:]:
             if notif['type'] == 'invite' and "accept_rect" in notif:
                 if notif["accept_rect"].collidepoint(pos):
-                    threading.Thread(target=self.accept_invite, args=(notif["uuid"],True,), daemon=True).start()
+                    threading.Thread(target=self.accept_invite, args=(notif["uuid"], True,), daemon=True).start()
                     self.notifications.remove(notif)
                     return True
                 if notif["reject_rect"].collidepoint(pos):
@@ -637,11 +619,10 @@ class Graphics:
             g = int((top_color[1] + (bottom_color[1] - top_color[1]) * ratio) * darkness_factor)
             b = int((top_color[2] + (bottom_color[2] - top_color[2]) * ratio) * darkness_factor)
 
-        # Zaisti, že farby nebudú menšie než 0
+            # Zaisti, že farby nebudú menšie než 0
             r = max(0, r)
             g = max(0, g)
             b = max(0, b)
 
             pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
         return surface
-
