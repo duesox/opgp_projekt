@@ -3,16 +3,31 @@ import threading
 import pygame
 import random
 
+CELL_SIZE = 100
+RADIUS = CELL_SIZE // 2 - 5
+BG_COLOR = (0, 0, 139)
+EMPTY_COLOR = (220, 220, 220)
+NOTIF_COLOR_INFO = (30, 30, 30)
+NOTIF_COLOR_INV = (30, 30, 80)
+NOTIF_COLOR_BORDER = (200, 200, 200)
+PLAYER_COLORS = [(255, 255, 0), (255, 0, 0)]
+SPACING_TITLE = 7
+TITLE_TEXT = "CONNECT 4"
+REDUCED_SPACING = 4
+X_POS_L = 20
+Y_POS_MAX_L = 140
+PETDESIAT = 50
+STOSEDEMDESIAT = 170
+BLOCK_WIDTH = 500
+BLOCK_HEIGHT = 60
+BLOCK_MARGIN = 20
+BLOCK_START_Y = 100
+COLOR_RIED = (255, 0, 0)
+PADRING = 35
+NIE = "Nie"
+ANO = "Ano"
 
 class Graphics:
-    CELL_SIZE = 100
-    RADIUS = CELL_SIZE // 2 - 5
-    BG_COLOR = (0, 0, 139)
-    EMPTY_COLOR = (220, 220, 220)
-    NOTIF_COLOR_INFO = (30, 30, 30)
-    NOTIF_COLOR_INV = (30, 30, 80)
-    NOTIF_COLOR_BORDER = (200, 200, 200)
-    PLAYER_COLORS = [(255, 255, 0), (255, 0, 0)]
 
     def set_empty_text(self, text):
         self.empty_text = text
@@ -241,16 +256,16 @@ class Graphics:
         text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y + 20))
         self.screen.blit(text_surface, text_rect)
 
-        text = "No"
+        text = NIE
         txt = exit_font.render(text, True, (0, 0, 0))
         text_rect2 = txt.get_rect(center=(self.WIDTH // 2 - 100, y + 120))
 
-        text2 = "Yes"
+        text2 = ANO
         txt2 = exit_font.render(text2, True, (0, 0, 0))
         text_rect = txt.get_rect(center=(self.WIDTH // 2 + 100, y + 120))
 
         # Nastav veľkosť okolo textu
-        padding = 35
+        padding = PADRING
         button_rect = pygame.Rect(
             text_rect.left - padding // 2,
             text_rect.top - padding // 2,
@@ -311,7 +326,7 @@ class Graphics:
         exit_txt = menu_font.render(text, True, (0, 0, 0))
         exit_rect = exit_txt.get_rect(center=(self.WIDTH // 2, y + 400))
 
-        padding = 35
+        padding = PADRING
         button_main_menu_rect = pygame.Rect(
             main_menu_rect.left - padding // 2,
             main_menu_rect.top - padding // 2,
@@ -336,10 +351,10 @@ class Graphics:
             restart_rect.width + padding,
             restart_rect.height + padding)
 
-        pygame.draw.rect(self.screen, (255, 0, 0), button_main_menu_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_obnov_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_restart_rect, border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_exit_rect, border_radius=40)
+        pygame.draw.rect(self.screen, COLOR_RIED, button_main_menu_rect, border_radius=10)
+        pygame.draw.rect(self.screen, COLOR_RIED, button_obnov_rect, border_radius=10)
+        pygame.draw.rect(self.screen, COLOR_RIED, button_restart_rect, border_radius=10)
+        pygame.draw.rect(self.screen, COLOR_RIED, button_exit_rect, border_radius=40)
 
         inner_padding = 9  # hrúbka červeného okraja
 
@@ -365,10 +380,10 @@ class Graphics:
         font_small = pygame.font.SysFont("Arial", 14)
         font_mini = pygame.font.SysFont("Arial", 9)
 
-        block_width = 500
-        block_height = 60
-        margin = 20
-        start_y = 100  # Leave space for header
+        block_width = BLOCK_WIDTH
+        block_height = BLOCK_HEIGHT
+        margin = BLOCK_MARGIN
+        start_y = BLOCK_START_Y # Leave space for header
 
         screen_width, _ = self.screen.get_size()
         block_x = (screen_width - block_width) // 2  # Center horizontally
@@ -428,12 +443,12 @@ class Graphics:
             "Hráč, ktorý to dosiahne ako prvý, vyhráva.",
             "Ak je mriežka plná a nikto nevyhral, je to remíza.",
         ]
-        y = 170
+        y = STOSEDEMDESIAT
         for line in lines:
             text_surface = self.font.render(line, True, (0, 0, 0))
             text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y))
             self.screen.blit(text_surface, text_rect)
-            y += 50
+            y += PETDESIAT
 
         self.leave_button()
 
@@ -445,8 +460,8 @@ class Graphics:
                                                                (130, 130, 255), 0.7), (0, 0))
 
         # Pozície pre text naľavo
-        x_pos = 20
-        y_pos_max = 140
+        x_pos = X_POS_L
+        y_pos_max = Y_POS_MAX_L
 
         max_skore_text = self.small_font.render(f"Max skóre:", True, (255, 255, 255))
         max_skore = self.small_font.render(f"{skore_max}", True, (255, 255, 255))
@@ -466,9 +481,9 @@ class Graphics:
 
     def draw_title(self, surface):
         font = pygame.font.SysFont("arialblack", 70, bold=True)
-        text = "CONNECT 4"
-        spacing = 7  # bežné medzery medzi písmenami
-        reduced_spacing = 4  # menšia medzera medzi 'T' a '4'
+        text = TITLE_TEXT
+        spacing = SPACING_TITLE  # bežné medzery medzi písmenami
+        reduced_spacing = REDUCED_SPACING  # menšia medzera medzi 'T' a '4'
 
         # Predbežný výpočet šírky textu s rôznymi medzerami
         total_width = 0
