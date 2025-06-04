@@ -32,7 +32,10 @@ BRB = "Odísť"
 SNG = "Lokálna Hra"
 MULT = "Inter niet"
 USURE = "Ty vážne chceš odísť? To naozaj?"
-
+WIN = "Vyhral "
+RED = "Červený"
+BLUE = "Žltý"
+RAMMIN = "REMIZA IS INITIALIZED"
 class Graphics:
 
     def set_empty_text(self, text):
@@ -202,9 +205,9 @@ class Graphics:
                 pygame.draw.rect(self.screen, c["color"], (c["x"], c["y"], c["size"], c["size"]))
 
             if vyherca.lower() == "cervena":
-                text = self.font.render("Vyhral červený!", True, (255, 255, 255))
+                text = self.font.render(WIN+RED, True, (255, 255, 255))
             else:
-                text = self.font.render("Vyhral žltý!", True, (255, 255, 255))
+                text = self.font.render(WIN+BLUE, True, (255, 255, 255))
             text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
             self.screen.blit(text, text_rect)
 
@@ -221,7 +224,7 @@ class Graphics:
                 if event.type == pygame.QUIT or event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
                     running = False
                     self.animuje = False
-            text = self.font.render("Remíza!", True, (32, 32, 32))
+            text = self.font.render(RAMMIN, True, (32, 32, 32))
             text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
             self.screen.blit(text, text_rect)
 
