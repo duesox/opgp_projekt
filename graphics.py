@@ -421,7 +421,7 @@ class Graphics:
 
                 # Draw "Nick", UUID, Last Online
                 nick_text = font_main.render(nick, True, (255, 0, 0))
-                uuid_text = font_mini.render(uuid, True, (200, 200, 200))
+                uuid_text = font_mini.render(uuid, True, (0, 0, 200))
                 last_text = font_main.render(last, True, (180, 180, 180))
 
                 self.screen.blit(nick_text, (block_x + 10, y + 5))
