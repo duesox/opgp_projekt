@@ -386,7 +386,6 @@ class Graphics:
         self.draw_animated_background()
 
         font_main = pygame.font.SysFont("Arial", 20)
-        font_small = pygame.font.SysFont("Arial", 14)
         font_mini = pygame.font.SysFont("Arial", 9)
 
         block_width = BLOCK_WIDTH
