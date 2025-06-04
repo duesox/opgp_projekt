@@ -107,12 +107,12 @@ class LogikaHry:
             """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
 
             # Určí šírku hracej plochy
-            sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+            sirka_hracej_plochy = self.gra.cols * gr.CELL_SIZE
             offset = 250  # Posun hracej plochy doprava o 250 px
 
             # Skontroluje, či kliknutie je v rámci hracej plochy
             if offset <= x_pozicia <= offset + sirka_hracej_plochy:
-                stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+                stlpec = (x_pozicia - offset) // gr.CELL_SIZE  # Výpočet stĺpca
                 volny_riadok = self.prazdnyRiadok(stlpec)
 
                 if volny_riadok is not None:
@@ -122,12 +122,12 @@ class LogikaHry:
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 2 if self.hrac == 1 else 1
         elif self.mult_game and not protihrac and self.hrac == self.mult_color:
-            sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+            sirka_hracej_plochy = self.gra.cols * gr.CELL_SIZE
             offset = 250  # Posun hracej plochy doprava o 250 px
 
             # Skontroluje, či kliknutie je v rámci hracej plochy
             if offset <= x_pozicia <= offset + sirka_hracej_plochy:
-                stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+                stlpec = (x_pozicia - offset) // gr.CELL_SIZE  # Výpočet stĺpca
                 volny_riadok = self.prazdnyRiadok(stlpec)
 
                 if volny_riadok is not None:

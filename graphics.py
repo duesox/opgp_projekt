@@ -54,8 +54,8 @@ class Graphics:
         self.not_font = pygame.font.SysFont("Arial", 20, bold=True)
         self.rows = rows  # Nastaví počet riadkov na doske.
         self.cols = cols  # Nastaví počet stĺpcov na doske.
-        width = cols * self.CELL_SIZE  # Šírka obrazovky (šírka všetkých stĺpcov).
-        height = (rows + 1) * self.CELL_SIZE  # Výška obrazovky (výška všetkých riadkov + jeden riadok na názov).
+        width = cols * CELL_SIZE  # Šírka obrazovky (šírka všetkých stĺpcov).
+        height = (rows + 1) * CELL_SIZE  # Výška obrazovky (výška všetkých riadkov + jeden riadok na názov).
 
         self.screen = pygame.display.set_mode((width, height))  # Nastaví veľkosť okna na obrazovke.
         pygame.display.set_caption("Connect 4")  # Nastaví názov okna na "Connect 4".
@@ -120,11 +120,11 @@ class Graphics:
         # Potom nakresli hraciu plochu
         for row in range(self.rows):
             for col in range(self.cols):
-                color = self.EMPTY_COLOR if self.board[row][col] == 0 else self.PLAYER_COLORS[self.board[row][col] - 1]
+                color = EMPTY_COLOR if self.board[row][col] == 0 else PLAYER_COLORS[self.board[row][col] - 1]
                 pygame.draw.circle(self.screen, color, (
-                    col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250,
-                    (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2),
-                                   self.RADIUS)
+                    col * CELL_SIZE + CELL_SIZE // 2 + 250,
+                    (row + 1) * CELL_SIZE + CELL_SIZE // 2),
+                                   RADIUS)
 
         # Potom nakresli názov
         self.draw_title(self.screen)
@@ -153,16 +153,16 @@ class Graphics:
         # TODO toto treba poriesit, aby to fungovalo
         # self.animuje = True
         # X pozícia, kde bude žetón spadávať (stĺpec * veľkosť bunky + polovičná veľkosť).
-        x = col * self.CELL_SIZE + self.CELL_SIZE // 2 + 250
+        x = col * CELL_SIZE + CELL_SIZE // 2 + 250
         # Počiatočná Y pozícia (na začiatku nad doskou).
-        y_start = self.CELL_SIZE // 2
-        y_end = (row + 1) * self.CELL_SIZE + self.CELL_SIZE // 2
+        y_start = CELL_SIZE // 2
+        y_end = (row + 1) * CELL_SIZE + CELL_SIZE // 2
 
         # Animácia pádu (posúvanie žetónu po Y osi).
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
             self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player)
-            pygame.draw.circle(self.screen, self.PLAYER_COLORS[current_player - 1], (x, y),
-                               self.RADIUS)  # Vykreslí žetón na novej pozícii.
+            pygame.draw.circle(self.screen, PLAYER_COLORS[current_player - 1], (x, y),
+                               RADIUS)  # Vykreslí žetón na novej pozícii.
 
             pygame.display.flip()
             pygame.time.delay(5)  # Zastaví na 5 ms pre efekt pádu.
@@ -176,7 +176,7 @@ class Graphics:
     def current_player(self, player):
         x = 90  # left + half width
         y = 90
-        pygame.draw.circle(self.screen, self.PLAYER_COLORS[player - 1], (x, y), self.RADIUS)
+        pygame.draw.circle(self.screen, PLAYER_COLORS[player - 1], (x, y), RADIUS)
 
     def winAnimation(self, vyherca):
         confetti_list = []
@@ -552,7 +552,7 @@ class Graphics:
             y = surface.get_height() - total_height
             for notif, height in notifs_to_draw:
                 x = surface.get_width() - self.NOTIF_WIDTH - self.MARGIN
-                color = self.NOTIF_COLOR_INFO if notif["type"] != "invite" else self.NOTIF_COLOR_INV
+                color = NOTIF_COLOR_INFO if notif["type"] != "invite" else NOTIF_COLOR_INV
 
                 # Pozadie
                 notif_rect = pygame.Rect(x, y, self.NOTIF_WIDTH, height)
@@ -630,7 +630,7 @@ class Graphics:
         for token in self.animated_tokens[:]:
             token["y"] += token["speed"]
             color = (255, 0, 0) if token["color"] == "red" else (255, 255, 0)
-            pygame.draw.circle(self.screen, color, (int(token["x"]), int(token["y"])), self.RADIUS)
+            pygame.draw.circle(self.screen, color, (int(token["x"]), int(token["y"])), RADIUS)
 
             if token["y"] > self.HEIGHT + 40:
                 self.animated_tokens.remove(token)
