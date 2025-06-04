@@ -26,6 +26,12 @@ COLOR_RIED = (255, 0, 0)
 PADRING = 35
 NIE = "Nie"
 ANO = "Ano"
+HRAT = "Hrať"
+O = "O hre"
+BRB = "Odísť"
+SNG = "Lokálna Hra"
+MULT = "Inter niet"
+USURE = "Ty vážne chceš odísť? To naozaj?"
 
 class Graphics:
 
@@ -224,22 +230,22 @@ class Graphics:
     def show_main_menu(self):
 
         self.draw_animated_background()
-        play_rect = self.draw_text_centered("Play", 200)
-        about_rect = self.draw_text_centered("About", 300)
-        exit_rect = self.draw_text_centered("Exit", 400)
+        play_rect = self.draw_text_centered(HRAT, 200)
+        about_rect = self.draw_text_centered(O, 300)
+        exit_rect = self.draw_text_centered(BRB, 400)
         self.draw_title(self.screen)
         return play_rect, about_rect, exit_rect
 
     def show_play_menu(self):
         self.draw_animated_background()
-        local_rect = self.draw_text_centered("On this device", 250)
-        online_rect = self.draw_text_centered("Online (Coming Soon)", 350)
+        local_rect = self.draw_text_centered(SNG, 250)
+        online_rect = self.draw_text_centered(MULT, 350)
         self.draw_title(self.screen)
         self.leave_button()
 
         return local_rect, online_rect
 
-    def exit_window(self, widht=400, height=200, text="Are you sure you want to exit?", main=True):
+    def exit_window(self, widht=400, height=200, text=USURE, main=True):
         if main:
             self.show_main_menu()
 
