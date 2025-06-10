@@ -155,7 +155,7 @@ class Networking:
         self.no_devices_found = lambda cas: None
 
         self.on_online_game_start = lambda zacinajuci: None
-
+        #delete s.system()
         self._x_size = 7
         self._y_size = 6
         self._max_wins = 3

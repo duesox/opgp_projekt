@@ -2,6 +2,8 @@ import threading
 
 import pygame
 import random
+
+WHITE = (255, 255, 255)
 CELL_SIZE = 100
 RADIUS = CELL_SIZE // 2 - 5
 BG_COLOR = (0, 0, 139)
@@ -9,15 +11,33 @@ EMPTY_COLOR = (220, 220, 220)
 NOTIF_COLOR_INFO = (30, 30, 30)
 NOTIF_COLOR_INV = (30, 30, 80)
 NOTIF_COLOR_BORDER = (200, 200, 200)
-PLAYER_COLORS = [(255, 255,0), (255, 0, 0)]
-WHITE = (255, 255, 255)
-ANO = "Áno"
+PLAYER_COLORS = [(255, 255, 0), (255, 0, 0)]
+SPACING_TITLE = 7
+TITLE_TEXT = "CONNECT 4"
+REDUCED_SPACING = 4
+X_POS_L = 20
+Y_POS_MAX_L = 140
+PETDESIAT = 50
+STOSEDEMDESIAT = 170
+BLOCK_WIDTH = 500
+BLOCK_HEIGHT = 60
+BLOCK_MARGIN = 20
+BLOCK_START_Y = 100
+COLOR_RED = (255, 0, 0)
+PADRING = 35
 NIE = "Nie"
-
-
+ANO = "Áno"
+HRAT = "Hrať"
+O = "O hre"
+BRB = "Odísť"
+SNG = "Lokálna Hra"
+MULT = "Cez sieť"
+USURE = "Vážne chcete odísť?"
+WIN = "Vyhral "
+RED = "Červený"
+BLUE = "Žltý"
+REMIZA = "Remíza!"
 class Graphics:
-    
-
 
     def set_empty_text(self, text):
         self.empty_text = text
@@ -52,7 +72,8 @@ class Graphics:
         self.big_font = pygame.font.SysFont("Arial", 60, bold=True)
         self.board = [[0 for _ in range(cols)] for _ in range(rows)]
         self.running = True
-        self.background_gradient = self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255), (130, 130, 255),0.95)
+        self.background_gradient = self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT, (30, 30, 255),
+                                                                         (130, 130, 255), 0.95)
 
         self.empty_text = ''
 
@@ -94,9 +115,9 @@ class Graphics:
 
         return button_rect
 
-    def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player):
-        self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT,(30, 30, 255),
-                                                               (130, 130, 255),0.8), (0, 0))
+    def draw_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player):
+        self.screen.blit(self.create_vertical_gradient_surface(self.WIDTH, self.HEIGHT, (30, 30, 255),
+                                                               (130, 130, 255), 0.8), (0, 0))
 
         # Najprv zobraz skóre
         self.zobraz_skore(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore)
@@ -114,17 +135,12 @@ class Graphics:
         self.draw_title(self.screen)
         self.current_player(current_player)
 
-
-
-
         self.leave_button()
-
 
     def leave_button(self):
         leave_button = pygame.Rect(50, 610, 80, 80)
         pygame.draw.rect(self.screen, (255, 255, 0), leave_button, border_radius=40)
         pygame.draw.rect(self.screen, (255, 0, 0), leave_button, border_radius=40, width=10)
-
 
         # Vycentrovaný text v tlačidle
         leave_txt = self.not_font.render("Menu", True, (0, 0, 0))
@@ -132,11 +148,6 @@ class Graphics:
         self.screen.blit(leave_txt, text_rect)
 
         return leave_button
-
-
-
-
-
 
     def clear_board(self, vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player):
         self.board = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
@@ -154,26 +165,22 @@ class Graphics:
 
         # Animácia pádu (posúvanie žetónu po Y osi).
         for y in range(y_start, y_end, 10):  # Posúvanie žetónu o 10 px.
-            self.draw_board(vyhry_zlty,vyhry_cerveny,skore_zlty,skore_cerveny,skore, current_player)
+            self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore, current_player)
             pygame.draw.circle(self.screen, PLAYER_COLORS[current_player - 1], (x, y), RADIUS)  # Vykreslí žetón na novej pozícii.
             pygame.display.flip()
             #pygame.time.delay(10)  # Zastaví na 5 ms pre efekt pádu.
 
         # Po dokončení animácie nastaví žetón na správnu pozíciu na doske.
         self.board[row][col] = current_player
-        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,current_player)  # Vykreslí dosku po páde žetónu.
+        self.draw_board(vyhry_zlty, vyhry_cerveny, skore_zlty, skore_cerveny, skore,
+                        current_player)  # Vykreslí dosku po páde žetónu.
         self.animuje = False
         print("3478947893147139471489178923418942423")
 
-
-    def current_player(self,player):
+    def current_player(self, player):
         x = 90  # left + half width
         y = 90
         pygame.draw.circle(self.screen, PLAYER_COLORS[player - 1], (x, y), RADIUS)
-
-
-
-
 
     def winAnimation(self, vyherca):
         confetti_list = []
@@ -203,9 +210,9 @@ class Graphics:
                 pygame.draw.rect(self.screen, c["color"], (c["x"], c["y"], c["size"], c["size"]))
 
             if vyherca.lower() == "cervena":
-                text = self.font.render("Vyhral červený!", True, WHITE)
+                text = self.font.render(WIN+RED+"!", True, (255, 255, 255))
             else:
-                text = self.font.render("Vyhral žltý!", True, WHITE)
+                text = self.font.render(WIN+BLUE+"!", True, (255, 255, 255))
             text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
             self.screen.blit(text, text_rect)
 
@@ -223,7 +230,7 @@ class Graphics:
                     running = False
                     self.disconnect("Hra bola ukončená 2. hráčom.")
                     self.animuje = False
-            text = self.font.render("Remíza!", True, WHITE)
+            text = self.font.render(REMIZA, True, (32, 32, 32))
             text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2))
             self.screen.blit(text, text_rect)
 
@@ -232,29 +239,36 @@ class Graphics:
     def show_main_menu(self):
 
         self.draw_animated_background()
+
         play_rect = self.draw_text_centered("Hrať", 200, width=250)
         about_rect = self.draw_text_centered("O hre", 300, width=250)
         exit_rect = self.draw_text_centered("Opustiť hru", 400, width=250)
+
+        play_rect = self.draw_text_centered(HRAT, 200, width=250)
+        about_rect = self.draw_text_centered(O, 300, width=250)
+        exit_rect = self.draw_text_centered(BRB, 400, width=250)
+
         self.draw_title(self.screen)
         return play_rect, about_rect, exit_rect
 
     def show_play_menu(self):
         self.draw_animated_background()
-        local_rect = self.draw_text_centered("Lokálna hra", 250, width=250)
-        online_rect = self.draw_text_centered("Cez sieť", 350, width=250)
+
+        local_rect = self.draw_text_centered(SNG, 250, width=250)
+        online_rect = self.draw_text_centered(MULT, 350, width=250)
         self.draw_title(self.screen)
         self.leave_button()
 
         return local_rect, online_rect
-    def exit_window(self,width=400,height=200,text="Naozaj chcete odísť?", main=True):
+    def exit_window(self, widht=400, height=200, text=USURE, main=True):
         if main:
             self.show_main_menu()
 
-        x=self.WIDTH//2-width//2
-        y=self.HEIGHT//2-height//2
+        x = self.WIDTH // 2 - widht // 2
+        y = self.HEIGHT // 2 - height // 2
 
-        exit_rect = pygame.Rect(x, y, width, height)
-        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x-8, y-8, width+16, height+16), border_radius=8)
+        exit_rect = pygame.Rect(x, y, widht, height)
+        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x - 8, y - 8, widht + 16, height + 16), border_radius=8)
         pygame.draw.rect(self.screen, (51, 51, 255), exit_rect, border_radius=8)
 
         exit_font = pygame.font.SysFont("Arial", 30, bold=True)
@@ -270,17 +284,17 @@ class Graphics:
         text_rect = txt.get_rect(center=(self.WIDTH // 2 + 100, y + 120))
 
         # Nastav veľkosť okolo textu
-        padding = 35
+        padding = PADRING
         button_rect = pygame.Rect(
             text_rect.left - padding // 2,
             text_rect.top - padding // 2,
             text_rect.width + padding,
-            text_rect.height + padding )
+            text_rect.height + padding)
 
         button_rect2 = pygame.Rect(
             text_rect2.left - padding // 2,
             text_rect2.top - padding // 2,
-            text_rect2.width + padding+10,
+            text_rect2.width + padding + 10,
             text_rect2.height + padding
         )
 
@@ -298,15 +312,15 @@ class Graphics:
         self.screen.blit(txt, text_rect)
         self.screen.blit(txt2, text_rect2)
 
-        return button_rect,button_rect2
+        return button_rect, button_rect2
 
-    def menu_window(self,width=300,height=450,):
+    def menu_window(self, widht=300, height=450, ):
 
-        x=self.WIDTH//2-width//2
-        y=self.HEIGHT//2-height//2
+        x = self.WIDTH // 2 - widht // 2
+        y = self.HEIGHT // 2 - height // 2
 
-        menu_rect = pygame.Rect(x, y, width, height)
-        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x-8, y-8, width+16, height+16), border_radius=8)
+        menu_rect = pygame.Rect(x, y, widht, height)
+        pygame.draw.rect(self.screen, (32, 32, 32), pygame.Rect(x - 8, y - 8, widht + 16, height + 16), border_radius=8)
         pygame.draw.rect(self.screen, (51, 51, 255), menu_rect, border_radius=8)
 
         menu_font = pygame.font.SysFont("Arial", 40, bold=True)
@@ -317,7 +331,7 @@ class Graphics:
 
         text = "Hlavné Menu"
         main_menu_txt = menu_font.render(text, True, (0, 0, 0))
-        main_menu_rect = main_menu_txt.get_rect(center=(self.WIDTH // 2 , y + 100))
+        main_menu_rect = main_menu_txt.get_rect(center=(self.WIDTH // 2, y + 100))
 
         text = "Obnov Hru"
         obnov_txt = menu_font.render(text, True, (0, 0, 0))
@@ -325,13 +339,13 @@ class Graphics:
 
         text = "Reštart Hry"
         restart_txt = menu_font.render(text, True, (0, 0, 0))
-        restart_rect = restart_txt.get_rect(center=(self.WIDTH // 2 , y + 300))
+        restart_rect = restart_txt.get_rect(center=(self.WIDTH // 2, y + 300))
 
         text = "Naspäť"
         exit_txt = menu_font.render(text, True, (0, 0, 0))
         exit_rect = exit_txt.get_rect(center=(self.WIDTH // 2, y + 400))
 
-        padding = 35
+        padding = PADRING
         button_main_menu_rect = pygame.Rect(
             (self.WIDTH - 250) // 2,
             main_menu_rect.top - padding // 2,
@@ -343,7 +357,6 @@ class Graphics:
             exit_rect.top - padding // 2,
             250,
             exit_rect.height + padding)
-
 
         button_obnov_rect = pygame.Rect(
             (self.WIDTH - 250) // 2,
@@ -357,10 +370,11 @@ class Graphics:
             250,
             restart_rect.height + padding)
 
-        pygame.draw.rect(self.screen, (255, 0, 0), button_main_menu_rect,border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_obnov_rect,border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_restart_rect,border_radius=10)
-        pygame.draw.rect(self.screen, (255, 0, 0), button_exit_rect,border_radius=10)
+
+        pygame.draw.rect(self.screen, COLOR_RED, button_main_menu_rect, border_radius=10)
+        pygame.draw.rect(self.screen, COLOR_RED, button_obnov_rect, border_radius=10)
+        pygame.draw.rect(self.screen, COLOR_RED, button_restart_rect, border_radius=10)
+        pygame.draw.rect(self.screen, COLOR_RED, button_exit_rect, border_radius=10)
 
         inner_padding = 9  # hrúbka červeného okraja
 
@@ -379,9 +393,7 @@ class Graphics:
         self.screen.blit(restart_txt, restart_rect)
         self.screen.blit(exit_txt, exit_rect)
 
-        return main_menu_rect,obnov_rect,restart_rect
-
-
+        return main_menu_rect, obnov_rect, restart_rect
 
     def show_network(self, players):
         self.draw_animated_background()
@@ -389,10 +401,10 @@ class Graphics:
         font_main = pygame.font.SysFont("Arial", 20)
         font_mini = pygame.font.SysFont("Arial", 9)
 
-        block_width = 500
-        block_height = 60
-        margin = 20
-        start_y = 100  # Leave space for header
+        block_width = BLOCK_WIDTH
+        block_height = BLOCK_HEIGHT
+        margin = BLOCK_MARGIN
+        start_y = BLOCK_START_Y # Leave space for header
 
         screen_width, _ = self.screen.get_size()
         block_x = (screen_width - block_width) // 2  # Center horizontally
@@ -418,11 +430,11 @@ class Graphics:
                 y = start_y + i * (block_height + margin)
 
                 # Draw outer block
-                pygame.draw.rect(self.screen, (50, 50, 50), (block_x, y, block_width, block_height), border_radius=6)
+                pygame.draw.rect(self.screen, (255, 255, 0), (block_x, y, block_width, block_height), border_radius=6)
 
                 # Draw "Nick", UUID, Last Online
-                nick_text = font_main.render(nick, True, WHITE)
-                uuid_text = font_mini.render(uuid, True, (200, 200, 200))
+                nick_text = font_main.render(nick, True, (255, 0, 0))
+                uuid_text = font_mini.render(uuid, True, (0, 0, 200))
                 last_text = font_main.render(last, True, (180, 180, 180))
 
                 self.screen.blit(nick_text, (block_x + 10, y + 5))
@@ -431,8 +443,10 @@ class Graphics:
 
                 # Draw "Invite" button
                 invite_rect.append([pygame.Rect(block_x + block_width // 2 - 40, y + 10, 80, 35), uuids[i]])
-                pygame.draw.rect(self.screen, (100, 150, 250), invite_rect[i][0], border_radius=5)
-                invite_text = font_main.render("Pozvať", True, (0, 0, 0))
+                pygame.draw.rect(self.screen, (255, 0, 0), invite_rect[i][0], border_radius=5)
+                invite_text = font_main.render("Pozvať", True, (255, 255, 0))
+                pygame.draw.rect(self.screen, (255, 0, 0), invite_rect[i][0], border_radius=5)
+                invite_text = font_main.render("Zavolat", True, (255, 255, 0))
                 self.screen.blit(invite_text, (invite_rect[i][0].x + 10, invite_rect[i][0].y + 5))
             self.draw_text_centered('Vyhľadávam hráčov...', 50)
             pygame.display.update()
@@ -441,7 +455,6 @@ class Graphics:
             self.draw_text_centered('Vyhľadávam hráčov...', 50)
             self.leave_button()
             return []
-
 
     def show_about(self):
         self.draw_animated_background()
@@ -453,13 +466,13 @@ class Graphics:
             "Hráč, ktorý to dosiahne ako prvý, vyhráva.",
             "Ak je mriežka plná a nikto nevyhral, je to remíza.",
         ]
-        y = 170
+        y = STOSEDEMDESIAT
         for line in lines:
             text_surface = self.font.render(line, True, WHITE)
+
             text_rect = text_surface.get_rect(center=(self.WIDTH // 2, y))
             self.screen.blit(text_surface, text_rect)
-            y += 50
-
+            y += PETDESIAT
 
         self.leave_button()
 
@@ -471,8 +484,8 @@ class Graphics:
                                                                (130, 130, 255), 0.7), (0, 0))
 
         # Pozície pre text naľavo
-        x_pos = 20
-        y_pos_max = 140
+        x_pos = X_POS_L
+        y_pos_max = Y_POS_MAX_L
 
         max_skore_text = self.small_font.render(f"Max skóre:", True, WHITE)
         max_skore = self.small_font.render(f"{skore_max}", True, WHITE)
@@ -484,17 +497,17 @@ class Graphics:
 
         self.screen.blit(max_skore_text, (x_pos, y_pos_max))
 
-        self.screen.blit(max_skore, (x_pos, y_pos_max+50))
-        self.screen.blit(cerveny_text, (x_pos, y_pos_max+120))
-        self.screen.blit(cerveny_skore, (x_pos, y_pos_max+170))
-        self.screen.blit(zlty_text, (x_pos, y_pos_max+240))
-        self.screen.blit(zlty_skore, (x_pos, y_pos_max+290))
+        self.screen.blit(max_skore, (x_pos, y_pos_max + 50))
+        self.screen.blit(cerveny_text, (x_pos, y_pos_max + 120))
+        self.screen.blit(cerveny_skore, (x_pos, y_pos_max + 170))
+        self.screen.blit(zlty_text, (x_pos, y_pos_max + 240))
+        self.screen.blit(zlty_skore, (x_pos, y_pos_max + 290))
 
     def draw_title(self, surface):
         font = pygame.font.SysFont("arialblack", 70, bold=True)
-        text = "CONNECT 4"
-        spacing = 7  # bežné medzery medzi písmenami
-        reduced_spacing = 4  # menšia medzera medzi 'T' a '4'
+        text = TITLE_TEXT
+        spacing = SPACING_TITLE  # bežné medzery medzi písmenami
+        reduced_spacing = REDUCED_SPACING  # menšia medzera medzi 'T' a '4'
 
         # Predbežný výpočet šírky textu s rôznymi medzerami
         total_width = 0
@@ -583,12 +596,11 @@ class Graphics:
 
                 y += height + self.MARGIN
 
-
     def handle_notif_clicks(self, pos):
         for notif in self.notifications[:]:
             if notif['type'] == 'invite' and "accept_rect" in notif:
                 if notif["accept_rect"].collidepoint(pos):
-                    threading.Thread(target=self.accept_invite, args=(notif["uuid"],True,), daemon=True).start()
+                    threading.Thread(target=self.accept_invite, args=(notif["uuid"], True,), daemon=True).start()
                     self.notifications.remove(notif)
                     return True
                 if notif["reject_rect"].collidepoint(pos):
@@ -646,11 +658,10 @@ class Graphics:
             g = int((top_color[1] + (bottom_color[1] - top_color[1]) * ratio) * darkness_factor)
             b = int((top_color[2] + (bottom_color[2] - top_color[2]) * ratio) * darkness_factor)
 
-        # Zaisti, že farby nebudú menšie než 0
+            # Zaisti, že farby nebudú menšie než 0
             r = max(0, r)
             g = max(0, g)
             b = max(0, b)
 
             pygame.draw.line(surface, (r, g, b), (0, y), (width, y))
         return surface
-

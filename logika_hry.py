@@ -1,6 +1,5 @@
 import time
 
-import graphics
 import graphics as gr
 import pygame
 import sys
@@ -108,12 +107,16 @@ class LogikaHry:
             """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
 
             # Určí šírku hracej plochy
-            sirka_hracej_plochy = self.gra.cols * graphics.CELL_SIZE
+
+            sirka_hracej_plochy = self.gra.cols * gr.CELL_SIZE
+
             offset = 250  # Posun hracej plochy doprava o 250 px
 
             # Skontroluje, či kliknutie je v rámci hracej plochy
             if offset <= x_pozicia <= offset + sirka_hracej_plochy:
-                stlpec = (x_pozicia - offset) // graphics.CELL_SIZE  # Výpočet stĺpca
+
+                stlpec = (x_pozicia - offset) // gr.CELL_SIZE  # Výpočet stĺpca
+
                 volny_riadok = self.prazdnyRiadok(stlpec)
 
                 if volny_riadok is not None:
@@ -123,12 +126,14 @@ class LogikaHry:
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 2 if self.hrac == 1 else 1
         elif self.mult_game and not protihrac and self.hrac == self.mult_color:
-            sirka_hracej_plochy = self.gra.cols * graphics.CELL_SIZE
+
+            sirka_hracej_plochy = self.gra.cols * gr.CELL_SIZE
             offset = 250  # Posun hracej plochy doprava o 250 px
 
             # Skontroluje, či kliknutie je v rámci hracej plochy
             if offset <= x_pozicia <= offset + sirka_hracej_plochy:
-                stlpec = (x_pozicia - offset) // graphics.CELL_SIZE  # Výpočet stĺpca
+
+                stlpec = (x_pozicia - offset) // gr.CELL_SIZE  # Výpočet stĺpca
                 volny_riadok = self.prazdnyRiadok(stlpec)
 
                 if volny_riadok is not None:
@@ -204,7 +209,11 @@ class LogikaHry:
                         continue
                     if self.state == "main_menu":
 
-
+                        self.obnovHru()
+                        self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                            self.skore_zlty.get_celkove_skore(),
+                                            self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),
+                                            self.hrac)
                         if buttons[0].collidepoint(event.pos):
                             self.state = "play_menu"
 
