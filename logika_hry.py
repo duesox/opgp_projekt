@@ -1,5 +1,6 @@
 import time
 
+import graphics
 import graphics as gr
 import pygame
 import sys
@@ -24,7 +25,6 @@ class LogikaHry:
         self.vyhra_cervena = 0
         self.vyhra_zlta = 0
         self.net = Networking()
-        self.net_thread = threading.Thread(target=self.discovering)
         self.hrac = hrac
         self.gra = gr.Graphics(self.POCET_RIADKOV, self.POCET_STLPCOV)
         self.zoznam_policok = []
@@ -57,6 +57,7 @@ class LogikaHry:
         self.gra.reject_invite = self.inv_react
 
         self.net.on_disconnect = self.opp_stop_mult
+        self.gra.disconnect = self.player_end_after_win
 
         # spustenie online hry
         self.net.on_online_game_start = self.online_game
@@ -107,12 +108,12 @@ class LogikaHry:
             """Spracuje kliknutie hráča a spustí animáciu pádu žetónu."""
 
             # Určí šírku hracej plochy
-            sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+            sirka_hracej_plochy = self.gra.cols * graphics.CELL_SIZE
             offset = 250  # Posun hracej plochy doprava o 250 px
 
             # Skontroluje, či kliknutie je v rámci hracej plochy
             if offset <= x_pozicia <= offset + sirka_hracej_plochy:
-                stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+                stlpec = (x_pozicia - offset) // graphics.CELL_SIZE  # Výpočet stĺpca
                 volny_riadok = self.prazdnyRiadok(stlpec)
 
                 if volny_riadok is not None:
@@ -122,21 +123,22 @@ class LogikaHry:
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 2 if self.hrac == 1 else 1
         elif self.mult_game and not protihrac and self.hrac == self.mult_color:
-            sirka_hracej_plochy = self.gra.cols * self.gra.CELL_SIZE
+            sirka_hracej_plochy = self.gra.cols * graphics.CELL_SIZE
             offset = 250  # Posun hracej plochy doprava o 250 px
 
             # Skontroluje, či kliknutie je v rámci hracej plochy
             if offset <= x_pozicia <= offset + sirka_hracej_plochy:
-                stlpec = (x_pozicia - offset) // self.gra.CELL_SIZE  # Výpočet stĺpca
+                stlpec = (x_pozicia - offset) // graphics.CELL_SIZE  # Výpočet stĺpca
                 volny_riadok = self.prazdnyRiadok(stlpec)
 
                 if volny_riadok is not None:
                     self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
                                           self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
                                           self.skore_cerveny.max_skore())
+                    self.net.send_move(stlpec)
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 1 if self.hrac == 2 else 2
-                    self.net.send_move(stlpec)
+
         elif self.mult_game and protihrac and self.hrac != self.mult_color:
             volny_riadok = self.prazdnyRiadok(stlpec)
             if volny_riadok is not None:
@@ -156,6 +158,7 @@ class LogikaHry:
 
     # game type - 0 - offline, 1 - online
     def run(self):
+        previous_tcp = 0
         """Spustí hlavný cyklus hry."""
         self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
@@ -179,13 +182,19 @@ class LogikaHry:
             elif self.state == "discovery":
                 if not self.net.get_discovering():
                     self.net.start_discovery()
+                self.net.discovery_tick()
+                self.discovery_update(self.net.discovery_tick())
                 buttons = self.gra.show_network(self.players)
             elif self.state == "game":
                 leave_button = self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                    self.skore_zlty.get_celkove_skore(),
                                                    self.skore_cerveny.get_celkove_skore(),
                                                    self.skore_cerveny.max_skore(),self.hrac)
-
+            if self.mult_game:
+                current_time = time.time()
+                if current_time - previous_tcp >= 1:
+                    previous_tcp = current_time
+                self.net.check_tcp_messages()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -406,18 +415,13 @@ class LogikaHry:
                     else:
                         self.dosadenie_zlta()
 
-    def discovering(self):
-        self.net.start_discovery()
 
     def discovery_update(self, devices):
         self.players = []
-        print(devices)
-        if len(devices) > 0:
-            for ip, info in devices.items():
-                self.players.append([info['nick'], info['uuid'], info['last_ping']])
-            self.gra.show_network(self.players)
-        if len(devices) == 0:
-            self.gra.show_network([])
+        if devices is not None:
+            if len(devices) > 0:
+                for ip, info in devices.items():
+                    self.players.append([info['nick'], info['uuid'], info['last_ping']])
 
     def recv_inv(self, nick, uuid):  # mozno tu este max_wins
         # zobrazit upozornenie a moznosti hej a ne
@@ -476,8 +480,14 @@ class LogikaHry:
             self.mult_color = 2
         self.hrac = 1
 
-    def opp_stop_mult(self):
-        self.gra.show_notification("Hráč nebol aktívny. Hra ukončená")
+    def opp_stop_mult(self, text):
+        self.gra.show_notification(text)
+        self.state = "main_menu"
+        self.mult_game = False
+
+    def player_end_after_win(self, text):
+        self.net.send_disconnect(text)
+        self.gra.show_notification("Ukončili ste hru.")
         self.state = "main_menu"
         self.mult_game = False
 

@@ -1,0 +1,9 @@
+[project]
+authors=[
+    {name="Jan Vargovcik", email="vargovcikj@spse-po.sk"},
+    {name="Lukas Radacovsky", email="radacovsky@spse-po.sk"},
+    {name="Oleksandr Shabaldas", email="shabaldas@spse-po.sk"}
+]
+description = "Connect 4 spracovany v PyGame s animaciami a sietami."
+readme= "README.md"
+version="1.0"
