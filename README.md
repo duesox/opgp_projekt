@@ -12,7 +12,7 @@
   Stiahnite si súbor hry ktorý obsahuje všetky potrebné knižnice a súbory pre spustenie hry. Tento súbor je už pripravený na spustenie bez nutnosti inštalácie ďalších závislostí. Stačí ho spustit, prípadne udeliť administrátorské práva, aby mohla hra komunikovať cez internet a môžete hrať! 🙂
 
 # 🫳 Použitie
-  Po prvom spustení aplikácie vyskočí administrátorské okno, ktoré je potrebné potvrdiť na fungovanie multiplayeru. Po spustení hry znova by sa to už nemalo zobrazovať. Potom sa klasicky sa zobrazí hlavné menu, kde hráč vyberie jeden z nasledujúcich režimov:
+  Po prvom spustení aplikácie vyskočí administrátorské okno, ktoré je potrebné potvrdiť na fungovanie multiplayeru. Po spustení hry znova by sa to už nemalo zobrazovať. Potom sa klasicky zobrazí hlavné menu, kde hráč vyberie jeden z nasledujúcich režimov:
   ## Offline
   Dvaja hráči sa striedajú v hraní na jednom zariadení.
   ## Online
