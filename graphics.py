@@ -416,8 +416,8 @@ class Graphics:
     def show_network(self, players):
         self.draw_animated_background()
 
-        font_main = pygame.font.SysFont("Arial", 20)
-        font_mini = pygame.font.SysFont("Arial", 9)
+        font_main = pygame.font.SysFont("Arial", 20, bold=True)
+        font_mini = pygame.font.SysFont("Arial", 10)
 
         block_width = BLOCK_WIDTH
         block_height = BLOCK_HEIGHT
@@ -448,25 +448,33 @@ class Graphics:
                 y = start_y + i * (block_height + margin)
 
                 # Draw outer block
-                block_rect = pygame.draw.rect(self.screen, YELLOW, (block_x, y, block_width, block_height), border_radius=6)
+
+                block_rect = pygame.draw.rect(self.screen, (255, 255, 0), (block_x, y, block_width, block_height), border_radius=6)
                 center_y = block_rect.centery
 
                 # Draw "Nick", UUID, Last Online
                 nick_text = font_main.render(nick, True, (255, 0, 0))
                 uuid_text = font_mini.render(uuid, True, (0, 0, 200))
-                last_text = font_main.render(last, True, (180, 180, 180))
+                last_text = font_main.render(last, True, (0, 0, 200))
 
-                self.screen.blit(nick_text, (block_x + 10, y + 5))
-                self.screen.blit(uuid_text, (block_x + 10, y + 30))
-                self.screen.blit(last_text, (block_x + block_width - last_text.get_width() - 10, y + 5))
+                nick_rect = nick_text.get_rect(midleft=(block_x + 10, center_y - 10))
+                uuid_rect = nick_text.get_rect(topleft=(block_x + 10, nick_rect.bottom + 5))
+                last_rect = last_text.get_rect(midright=(block_x + block_width - 10, center_y - 3))
+                self.screen.blit(nick_text, nick_rect)
+                self.screen.blit(uuid_text, uuid_rect)
+                self.screen.blit(last_text, last_rect)
 
                 # Draw "Invite" button
-                invite_rect.append([pygame.Rect(block_x + block_width // 2 - 40, y + 10, 80, 35), uuids[i]])
+                button_width, button_height = 80, 35
+                button_x = block_x + (block_width - button_width) // 2
+                button_y = center_y - block_height // 4 - 3
+                button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+                invite_rect.append([button_rect, uuids[i]])
                 pygame.draw.rect(self.screen, (255, 0, 0), invite_rect[i][0], border_radius=5)
-                invite_text = font_main.render("Pozvať", True, (255, 255, 0))
-                pygame.draw.rect(self.screen, (255, 0, 0), invite_rect[i][0], border_radius=5)
-                invite_text = font_main.render("Zavolat", True, (255, 255, 0))
-                self.screen.blit(invite_text, (invite_rect[i][0].x + 10, invite_rect[i][0].y + 5))
+
+                invite_text = font_main.render("Pozvať", True, (0, 0, 0))
+                invite_text_rect = invite_text.get_rect(center=button_rect.center)
+                self.screen.blit(invite_text, invite_text_rect)
             self.draw_text_centered('Vyhľadávam hráčov...', 50)
             return invite_rect
         else:
