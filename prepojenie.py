@@ -29,7 +29,7 @@ def send_message(message, sock):
 
 # nova firewall rule - vstup prot ID, port, dir: in - 1, out - 2
 def _create_firewall_rule(protocol, port, direction):
-    print(protocol, port, direction)
+    #print(protocol, port, direction)
     fw_policy = cc.CreateObject("HNetCfg.FwPolicy2")
     rules = fw_policy.Rules
     rule = cc.CreateObject("HNetCfg.FWRule")
@@ -86,6 +86,44 @@ def _manage_firewall_rules():
         # print(required_rules)
         if len(required_rules) > 0:
             if not is_admin():
+                import pygame
+                pygame.init()
+                screen = pygame.display.set_mode((700, 400))
+                pygame.display.set_caption("Dôležité upozornenie")
+                font = pygame.font.SysFont("Arial", 24)
+                small_font = pygame.font.SysFont("Arial", 20)
+
+                lines = [
+                    "Na správne fungovanie hry je potrebné udeliť administrátorské práva.",
+                    "Tie slúžia na nastavenie výnimky vo firewalle pre sieťovú komunikáciu.",
+                    "",
+                    "Prosím potvrďte to v nasledujúcom dialógu (ak sa zobrazí),",
+                    "inak nebude možné hrať multiplayer režim."
+                ]
+
+                ok_button = pygame.Rect(250, 300, 200, 50)
+
+                showing = True
+                while showing:
+                    screen.fill((255, 255, 210))
+                    for i, line in enumerate(lines):
+                        text = font.render(line, True, (0, 0, 0))
+                        screen.blit(text, (50, 40 + i * 40))
+
+                    pygame.draw.rect(screen, (255, 0, 0), ok_button, border_radius=10)
+                    pygame.draw.rect(screen, (255, 255, 0), ok_button.inflate(-10, -10), border_radius=10)
+                    text = small_font.render("Rozumiem", True, (0, 0, 0))
+                    text_rect = text.get_rect(center=ok_button.center)
+                    screen.blit(text, text_rect)
+
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            pygame.quit()
+                            exit()
+                        elif event.type == pygame.MOUSEBUTTONDOWN and ok_button.collidepoint(event.pos):
+                            showing = False
+
+                    pygame.display.flip()
                 ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
                 sys.exit()
 
@@ -96,13 +134,13 @@ def _manage_firewall_rules():
             rule_name = _create_firewall_rule(rule['protocol'], rule['port'], rule['direction'])
             created.append(rule_name)
         if len(created) > 0:
-            for name in created:
-                print(f"nova firewall rule: {name}")
+            #for name in created:
+                #print(f"nova firewall rule: {name}")
             time.sleep(5)
             ctypes.windll.shell32.ShellExecuteW(None, "open", sys.executable, f'"{sys.argv[0]}" --no-elevate', None, 1)
             sys.exit()
-        else:
-            print("uz vsetky rules existuju")
+        #else:
+            #print("uz vsetky rules existuju")
     except COMError as e:
         print("Chyba pri pristupe ku Firewall -", {e})
     except Exception as e:
@@ -133,8 +171,8 @@ class Networking:
         self._game_sock = None
         self._devices = {}
         self._self_address = socket.gethostbyname(socket.gethostname())
-        print(self._self_address)
-        print(get_local_ip())
+        #print(self._self_address)
+        #print(get_local_ip())
         self._discovering = False
         self._nic = 0
 
@@ -154,7 +192,7 @@ class Networking:
 
         self.no_devices_found = lambda cas: None
 
-        self.on_online_game_start = lambda zacinajuci: None
+        self.on_online_game_start = lambda zacinajuci, nick: None
         #delete s.system()
         self._x_size = 7
         self._y_size = 6
@@ -181,9 +219,11 @@ class Networking:
         _manage_firewall_rules()
 
     def get_uuid(self):
-        print(self._uuid)
+        a = 5
+        #print(self._uuid)
 
     def set_nickname(self, nickname):
+        self.save.update_nick(nickname)
         self._nick = nickname
 
     def get_nickname(self):
@@ -219,11 +259,11 @@ class Networking:
                 if i not in ['vpn', 'Vpn', 'VPN']:
                     continue
             num += 1
-            print(i)
+            #print(i)
             j = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             j.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             j.bind(('', MPORT))
-            print(netifaces.ifaddresses(i)[2][0]['addr'])
+            #print(netifaces.ifaddresses(i)[2][0]['addr'])
             mreq = ip2bytes(MGROUP) + ip2bytes(netifaces.ifaddresses(i)[2][0]['addr'])  # tu musi byt presne zadana ipcka interfacu s inteom - bud ethernet alebo skor wifi
             j.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
             j.settimeout(1)
@@ -232,7 +272,7 @@ class Networking:
         if num == 0:
             raise ZeroDivisionError
         self._previous_device = time.time()
-        print('zacate vyhladavanie')
+        #print('zacate vyhladavanie')
 
     # toto treba osetrit, aby pri vypnuti programu sa vykonalo spolocne so stop_tcp_listen
     #
@@ -240,7 +280,7 @@ class Networking:
     def stop_discovery(self):
         self._send.close()
         self._discovering = False
-        print("ukonceny discovery")
+        #print("ukonceny discovery")
 
     def discovery_tick(self):
         if not self._discovering:
@@ -276,10 +316,10 @@ class Networking:
                             ip = addr[0]
                             if ip in self._devices:
                                 if self._devices[ip]['timestamp'] == message['timestamp']:
-                                    print("skipnuty rovnaky timestamp")
+                                    #print("skipnuty rovnaky timestamp")
                                     continue
                                 self._devices[ip]['timestamp'] = int(time.time())
-                                print("zmeneny timestamp")
+                                #print("zmeneny timestamp")
                             else:
                                 x = int(time.time()) - message['timestamp']
                                 self._devices[ip] = {
@@ -289,12 +329,12 @@ class Networking:
                                     'last_ping': x if x >= 0 else 0,
                                     'from_ip': recv.getsockname()[0],
                                 }
-                                print("pridane zar")
+                                #print("pridane zar")
                             # print(f"sprava prijata: {message}")
                             self._previous_device = current_time
                         elif message["app"] == "connect43sa" and message["type"] == "accept" and message[
                             'uuid'] != self._uuid and message['target'] == self._uuid:
-                            print(f"prijata pozvanka: {message}")
+                            #print(f"prijata pozvanka: {message}")
                             self.handle_message(message, decoded=True)
                     except (socket.timeout, json.JSONDecodeError):
                         continue
@@ -310,89 +350,14 @@ class Networking:
             old_ips = [ip for ip, info in self._devices.items() if current_time - info['timestamp'] > 15]
             for ip in old_ips:
                 del self._devices[ip]
-                print(f'vymazana stara ip: {ip}')
+                #print(f'vymazana stara ip: {ip}')
         return self._devices
 
-    """
-    def tcp_server_loop(self):
-        self._game_sock.settimeout(7)
-        nic = 0
-        try:
-            conn, addr = self._game_sock.accept()
-            self._opponent_conn = conn
-            conn.settimeout(1)
-            while self._tcp_recieving:
-                try:
-                    print("cyklujem")
-                    if nic >= 45:
-                        if conn is not None:
-                            conn.close()
-                        if self._game_sock is not None:
-                            self._game_sock.close()
-                        self._game_sock = None
-                        self._game_started = False
-                        self._tcp_recieving = False
-                        self.on_disconnect()
-                        print("nic >= 45")
-                        break
-                    print("1")
-                    data = conn.recv(1024)
-                    print("2")
-                    print(data.decode())
-                    if not data:
-                        print("not data", nic)
-                        nic += 1
-                        continue
-                    nic = 0
-                    self.handle_message(data)
-                    print("zistujem")
-                except socket.timeout:
-                    print("nic")
-                    continue
-                except socket.error as e:
-                    print("TCP Error Listener Loop: ", e)
-                    nic += 1
-                    print(nic)
-        except socket.error as e:
-            print("Accept Error: ", e)
-            self.on_disconnect()
-
-    def tcp_client_loop(self):
-        self._game_sock.settimeout(1)
-        nic = 0
-        while self._tcp_recieving:
-            try:
-                print("cyklujem")
-                if nic >= 45:
-                    self._game_sock.close()
-                    self._game_sock = None
-                    self._game_started = False
-                    self._tcp_recieving = False
-                    self.on_disconnect()
-                    break
-                data = self._game_sock.recv(1024)
-                print(data.decode())
-                if not data:
-                    print("not data", nic)
-                    nic += 1
-                    continue
-                nic = 0
-                self.handle_message(data)
-                print("zistujem")
-            except socket.timeout:
-                print("nic")
-                continue
-            except socket.error as e:
-                print("TCP klient chyba pri prijímaní:", e)
-                nic += 1
-                print(nic)
-                continue
-    """
 
     def check_tcp_messages(self):
         try:
             nic = 0
-            print("slucham")
+            #print("slucham")
             if self._is_server:
                 if nic >= 45:
                     if self._opponent_conn is not None:
@@ -403,20 +368,20 @@ class Networking:
                     self._game_started = False
                     self._tcp_recieving = False
                     self.on_disconnect("Hráč nebol k dosahu.")
-                    print("nic >= 45")
+                    #print("nic >= 45")
                     return
                 if not self._opponent_conn:
                     try:
                         conn, addr = self._game_sock.accept()
                         conn.setblocking(False)
                         self._opponent_conn = conn
-                        print("Prijaté spojenie od:", addr)
+                        #print("Prijaté spojenie od:", addr)
                     except BlockingIOError:
                         # non-blocking socket - nič ešte neprišlo
-                        print('kaer29458341')
+                        #print('kaer29458341')
                         return
-                    except socket.error:
-                        print("TCP chyba pri prijímaní (accept)")
+                    except socket.error as e:
+                        print(f"TCP chyba pri prijímaní (accept): {e}")
                         return
 
                 try:
@@ -427,7 +392,7 @@ class Networking:
                         nic += 1
                         print(nic)
                 except BlockingIOError:
-                    print('bfkdfoak123')
+                    #print('bfkdfoak123')
                     pass
                 except socket.error as e:
                     print("TCP chyba pri prijímaní (server recv):", e)
@@ -445,18 +410,19 @@ class Networking:
                         self.handle_message(data)
                     if not data:
                         nic += 1
-                        print(nic)
+                        #print(nic)
                 except BlockingIOError:
-                    print('block335')
+                    #print('block335')
                     pass
                 except socket.error as e:
                     print("TCP chyba pri prijímaní (klient recv):", e)
         except Exception as e:
-            print("Neočakávaná výnimka v check_tcp_messages:", e)
+            print("Neočakávaná výnimka:", e)
 
 
     # zapne sa pri prichode a vypne sa pri odchode z discovery/hry
     def start_tcp_listen(self, uuid):
+        nick = None
         self._is_server = True
         self._opponent_uuid = uuid
         self._tcp_recieving = True
@@ -466,9 +432,10 @@ class Networking:
         for ip, info in self._devices.items():
             if info['uuid'] == self._opponent_uuid:
                 self._self_address = info['from_ip']
+                nick = info['nick']
                 break
         try:
-            print(f"[SERVER] Pocuvam na: {self._self_address}:{PORT}")
+            #print(f"[SERVER] Pocuvam na: {self._self_address}:{PORT}")
             self._game_sock.bind((self._self_address, PORT))
         except OSError as e:
             print(f"Chyba pri nastavani posluchania: {e}")
@@ -477,46 +444,48 @@ class Networking:
         self._game_sock.listen(1)
         self._game_started = True
         self._opponent_conn = None
-        print("hra bola zacata")
-        self.on_online_game_start(True)
+        #print("hra bola zacata")
+        self.on_online_game_start(True, nick)
 
     def stop_tcp_listen(self):
         self._tcp_recieving = False
 
     def connect_to_server(self, uuid_game):
         address = None
+        nick = None
         for ip, info in self._devices.items():
             if info['uuid'] == uuid_game:
                 address = ip
+                nick = info['nick']
                 break
         if not address:
             raise Exception("Zariadenie sa nenaslo")
         try:
-            print(f"[CLIENT] Pokus o pripojenie na: {address}:{PORT}")
+            #print(f"[CLIENT] Pokus o pripojenie na: {address}:{PORT}")
             if self._game_sock is not None:
-                print("opa")
+                #print("opa")
                 self._game_sock.close()
             self._game_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self._game_sock.connect((address, PORT))
             self._game_sock.setblocking(False)
             self._game_started = True
             self._is_server = False
-            self.on_online_game_start(False)
-            print("hra bola zacata")
+            self.on_online_game_start(False, nick)
+            #print("hra bola zacata")
             self._tcp_recieving = True
         except (socket.error, ConnectionRefusedError) as e:
             self._game_sock = None
             print(f"Nastala chyba pri pripajani: {e}")
 
     def handle_message(self, recv, decoded=False):
-        print("ahoj")
+        #print("ahoj")
         if not decoded:
             message = json.loads(recv.decode())
         else:
             message = recv
-        print(message)
+        #print(message)
         if self._game_started:
-            print("hra zacata")
+            #print("hra zacata")
             if message['uuid'] != self._opponent_uuid and message['target'] != self._uuid:
                 return
             else:
@@ -563,7 +532,7 @@ class Networking:
 
     def handle_move(self, message):
         x = message['x']
-        print("prijaty tah", message)
+        #print("prijaty tah", message)
         self.on_move_recieved(x)
 
     # Poslanie pozvanky na hru – preposlanie do 2. zariadenia, nepovinny 2. parameter - 0 poslat pozvanku, 1 potvrdzujem poznamku, 2 odmietnuta pozvanka
@@ -600,24 +569,24 @@ class Networking:
             message = {'app': 'connect43sa', 'type': 'move', 'uuid': self._uuid, 'x': x, 'target': self._opponent_uuid}
             if self._opponent_conn:
                 send_message(message, self._opponent_conn)
-                print("opp")
+                #print("opp")
             else:
                 send_message(message, self._game_sock)
-                print("game")
+                #print("game")
         except socket.error:
             try:
                 if self._opponent_conn:
                     self._opponent_conn.close()
             except:
-                print("opp nejdze")
+                #print("opp nejdze")
                 pass
             try:
                 if self._game_sock:
                     self._game_sock.close()
             except:
-                print("game nejdze")
+                #print("game nejdze")
                 pass
-            print("com som tu")
+            #print("com som tu")
             self._opponent_conn = None
             self._game_sock = None
             self._game_started = False
@@ -634,7 +603,7 @@ class Networking:
             else:
                 send_message(message, self._game_sock)
         except socket.error:
-            print("coska wrong")
+            #print("coska wrong")
             try:
                 if self._opponent_conn:
 
@@ -661,7 +630,7 @@ if __name__ == "__main__":
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("KeyboardInterrupt")
+        #print("KeyboardInterrupt")
         net.stop_discovery()
         net.stop_tcp_listen()
         try:
