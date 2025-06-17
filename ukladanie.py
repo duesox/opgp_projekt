@@ -24,7 +24,7 @@ class Saving:
             os.makedirs(DATA_DIR, exist_ok=True)
             default_data = ["null", "null", 0]
             self.encrypt_and_save(default_data)
-            print("Konfiguracny subor vytvoreny.")
+            #print("Konfiguracny subor vytvoreny.")
         if os.path.exists(CONF_FILE):
             udaje = self.load_and_decrypt()
             self._uuid = udaje[0]
@@ -42,7 +42,8 @@ class Saving:
 
     def encrypt_and_save(self, data):
         fernet = Fernet(KEY)
-        encrypted = fernet.encrypt(f"{data[0]}\n{data[1]}\n{data[2]}".encode())
+        str_data = [str(d) for d in data]
+        encrypted = fernet.encrypt("\n".join(str_data).encode())
         with open(CONF_FILE, "wb") as f:
             f.write(encrypted)
 
@@ -52,3 +53,9 @@ class Saving:
         with open(CONF_FILE, "rb") as f:
             encrypted = f.read()
         return fernet.decrypt(encrypted).decode().strip().split("\n")
+
+    def update_nick(self, new_nick):
+        data = self.load_and_decrypt()
+        data[1] = new_nick
+        self.encrypt_and_save(data)
+        self._nick = new_nick

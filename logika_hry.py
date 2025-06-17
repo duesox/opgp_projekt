@@ -64,14 +64,30 @@ class LogikaHry:
         self.mult_game = False
         self.mult_color = 0  # 0 - cervena, 1 zlta
         self.player_color = 0
+        self.opp_nick = None
 
         self.nickname = self.net.get_nickname()
+        self.nickname_input_active = False
+        self.original_nickname = self.nickname
         self.clock = pygame.time.Clock()
         print("N   N EEEE ZZZZZ  AA  TTTTTT V     V  AA  RRRR   AA  TTTTTT     TTTTTT  OOO  TTTTTT  OOO       OOO  K  K N   N  OOO")
         print("NN  N E       Z  A  A   TT   V     V A  A R   R A  A   TT         TT   O   O   TT   O   O     O   O K K  NN  N O   O")
         print("N N N EEE    Z   AAAA   TT    V   V  AAAA RRRR  AAAA   TT         TT   O   O   TT   O   O     O   O KK   N N N O   O")
         print("N  NN E     Z    A  A   TT     V V   A  A R R   A  A   TT         TT   O   O   TT   O   O     O   O K K  N  NN O   O")
         print("N   N EEEE ZZZZZ A  A   TT      V    A  A R  RR A  A   TT         TT    OOO    TT    OOO       OOO  K  K N   N  OOO")
+        a = pygame.image.load("icon.png")
+        pygame.display.set_icon(a)
+
+    def save_nickname(self):
+        new_nick = self.nickname.strip()
+        if not new_nick:
+            self.nickname = self.original_nickname
+            self.gra.show_notification("Meno nemôže byť prázdne.")
+            return
+        if new_nick != self.original_nickname:
+            self.net.set_nickname(new_nick)
+            self.original_nickname = new_nick
+            self.gra.show_notification(f"Meno bolo uložené: {new_nick}")
 
     # Metóda na vymazanie dát zo zoznamu
     def obnovHru(self):
@@ -122,7 +138,7 @@ class LogikaHry:
                 if volny_riadok is not None:
                     self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
                                           self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
-                                          self.skore_cerveny.max_skore())
+                                          self.skore_cerveny.max_skore(), mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 2 if self.hrac == 1 else 1
         elif self.mult_game and not protihrac and self.hrac == self.mult_color:
@@ -139,7 +155,7 @@ class LogikaHry:
                 if volny_riadok is not None:
                     self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
                                           self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
-                                          self.skore_cerveny.max_skore())
+                                          self.skore_cerveny.max_skore(), mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
                     self.net.send_move(stlpec)
                     self.nastavHod(volny_riadok, stlpec, self.hrac)
                     self.hrac = 1 if self.hrac == 2 else 2
@@ -149,7 +165,7 @@ class LogikaHry:
             if volny_riadok is not None:
                 self.gra.animate_fall(stlpec, volny_riadok, self.hrac, self.vyhra_zlta, self.vyhra_cervena,
                                       self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(),
-                                      self.skore_cerveny.max_skore())
+                                      self.skore_cerveny.max_skore(), mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
                 self.nastavHod(volny_riadok, stlpec, self.hrac)
                 self.hrac = 2 if self.hrac == 1 else 1
 
@@ -165,8 +181,7 @@ class LogikaHry:
     def run(self):
         previous_tcp = 0
         """Spustí hlavný cyklus hry."""
-        self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
-                            self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+        #self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(), self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
 
         while self.running:
             self.gra.clock.tick(60)
@@ -177,7 +192,7 @@ class LogikaHry:
             if self.state == "main_menu":
                 buttons = self.gra.show_main_menu()
             elif self.state == "play_menu":
-                buttons = self.gra.show_play_menu()
+                buttons = self.gra.show_play_menu(self.nickname, self.nickname_input_active)
             elif self.state == "about":
                 self.gra.show_about()
             elif self.state == "exit_menu":
@@ -194,7 +209,7 @@ class LogikaHry:
                 leave_button = self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
                                                    self.skore_zlty.get_celkove_skore(),
                                                    self.skore_cerveny.get_celkove_skore(),
-                                                   self.skore_cerveny.max_skore(),self.hrac)
+                                                   self.skore_cerveny.max_skore(),self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
             if self.mult_game:
                 current_time = time.time()
                 if current_time - previous_tcp >= 1:
@@ -203,6 +218,18 @@ class LogikaHry:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
+
+                if self.state == "play_menu" and self.nickname_input_active:
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_RETURN:
+                            self.nickname_input_active = False
+                            self.save_nickname()
+                        elif event.key == pygame.K_BACKSPACE:
+                            self.nickname = self.nickname[:-1]
+                        else:
+                            if len(self.nickname) < 15:
+                                self.nickname += event.unicode
+                        continue
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.gra.handle_notif_clicks(event.pos):
@@ -213,7 +240,7 @@ class LogikaHry:
                         self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                             self.skore_zlty.get_celkove_skore(),
                                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),
-                                            self.hrac)
+                                            self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
                         if buttons[0].collidepoint(event.pos):
                             self.state = "play_menu"
 
@@ -228,31 +255,36 @@ class LogikaHry:
                         elif buttons[2].collidepoint(event.pos):
                             self.state="exit_menu"
 
-
-                        else:
-                            self.gra.show_notification("Netrafil si tlačidlo, skus ešte raz")
-
                     elif self.state == "play_menu":
-
-                        if buttons[0].collidepoint(event.pos):
-                            self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
-                                                 self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
-                            self.restartHru()
-                            self.state = "game"
-                            self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
-                                                self.skore_zlty.get_celkove_skore(),
-                                                self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
-
-                        elif buttons[1].collidepoint(event.pos):
-                            try:
-                                self.state = "discovery"
-                                self.gra.set_empty_text('Vyhľadávam hráčov...')
-                            except ZeroDivisionError:
-                                self.state = "main_menu"
-                                self.gra.show_notification("Nemáte žiadne internetové rozhrania.")
-                        elif self.gra.leave_button().collidepoint(event.pos):
+                        if self.gra.leave_button().collidepoint(event.pos):
                             self.state = "main_menu"
+                            continue
+                        else:
+                            input_box_rect = pygame.Rect(self.gra.WIDTH // 2 - 200, 500, 400, 50)
+                            if input_box_rect.collidepoint(event.pos):
+                                self.nickname_input_active = True
+                            else:
+                                if self.nickname_input_active:
+                                    self.save_nickname()
+                                self.nickname_input_active = False
+                            if buttons[0].collidepoint(event.pos):
+                                self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                     self.skore_zlty.get_celkove_skore(),
+                                                     self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
+                                self.restartHru()
+                                self.state = "game"
+                                self.gra.draw_board(self.vyhra_zlta, self.vyhra_cervena,
+                                                    self.skore_zlty.get_celkove_skore(),
+                                                    self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac, self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
+
+                            elif buttons[1].collidepoint(event.pos):
+                                try:
+                                    self.state = "discovery"
+                                    self.gra.set_empty_text('Vyhľadávam hráčov...')
+                                except ZeroDivisionError:
+                                    self.state = "main_menu"
+                                    self.gra.show_notification("Nemáte žiadne internetové rozhrania.")
+
 
                     elif self.state == "discovery":
                         if self.gra.leave_button().collidepoint(event.pos):
@@ -290,13 +322,13 @@ class LogikaHry:
                     elif self.state == "confirm_leave_mult":
                         button_no, button_yes = self.gra.exit_window(text="Chcete opustiť online hru?", main=False)
                         if button_yes.collidepoint(event.pos):
-                            self.net.send_disconnect()
+                            self.net.send_disconnect(text="Hra bola ukončená 2. hráčom.")
                             self.stop_mult()
                             self.obnovHru()
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
                                                  self.skore_cerveny.get_celkove_skore(),
-                                                 self.skore_cerveny.max_skore(), self.hrac)
+                                                 self.skore_cerveny.max_skore(), self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
                             self.state = "main_menu"
                         elif button_no.collidepoint(event.pos):
                             self.state = "game"
@@ -308,13 +340,13 @@ class LogikaHry:
                         elif button_obnov.collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
                             self.obnovHru()
                             self.state = "game"
                         elif button_restart.collidepoint(event.pos):
                             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena,
                                                  self.skore_zlty.get_celkove_skore(),
-                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                                                 self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
                             self.restartHru()
                             self.state = "game"
                         else:
@@ -345,18 +377,20 @@ class LogikaHry:
     def dosadenie_cervena(self):
         self.vyhra_cervena += 1
         self.skore_cerveny.set_celkove_skore(self.pocet_kol)
-        self.gra.winAnimation("cervena")
+        mult = True if self.mult_game else False
+        self.gra.winAnimation("cervena", mult)
         self.obnovHru()
         self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
-                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
 
     def dosadenie_zlta(self):
         self.vyhra_zlta += 1
-        self.gra.winAnimation("zlta")
+        mult = True if self.mult_game else False
+        self.gra.winAnimation("zlta", mult)
         self.skore_zlty.set_celkove_skore(self.pocet_kol)
         self.obnovHru()
         self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
-                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac)
+                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
 
     def vyhodnotHru(self):
         a = False
@@ -371,7 +405,7 @@ class LogikaHry:
             self.obnovHru()
             self.gra.clear_board(self.vyhra_zlta, self.vyhra_cervena, self.skore_zlty.get_celkove_skore(),
                             self.skore_cerveny.get_celkove_skore(), self.skore_cerveny.max_skore(),
-                            self.hrac)
+                            self.hrac, mult=self.mult_game, opp=self.opp_nick, nick=self.nickname, por=self.mult_color)
             a=True
 
 
@@ -434,7 +468,7 @@ class LogikaHry:
 
     def recv_inv(self, nick, uuid):  # mozno tu este max_wins
         # zobrazit upozornenie a moznosti hej a ne
-        print(f'dosiel inv {nick}: {uuid}')
+        #print(f'dosiel inv {nick}: {uuid}')
         self.gra.receive_invite(nick, uuid)
 
     def recv_inv_rej(self):
@@ -476,13 +510,14 @@ class LogikaHry:
             try:
                 self.net.game_accept(uuid)
             except Exception as e:
-                print(e)
+                #print(e)
                 self.gra.show_notification(str(e))
         threading.Thread(target=_thread_invite, daemon=True).start()
 
-    def online_game(self, zacinajuci):
+    def online_game(self, zacinajuci, nick):
         self.mult_game = True
         self.state = "game"
+        self.opp_nick = nick
         if zacinajuci:
             self.mult_color = 1
         else:
@@ -493,12 +528,14 @@ class LogikaHry:
         self.gra.show_notification(text)
         self.state = "main_menu"
         self.mult_game = False
+        self.opp_nick = None
 
     def player_end_after_win(self, text):
         self.net.send_disconnect(text)
         self.gra.show_notification("Ukončili ste hru.")
         self.state = "main_menu"
         self.mult_game = False
+        self.opp_nick = None
 
 
 
